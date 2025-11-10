@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\TableController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,6 +16,7 @@ use App\Http\Controllers\UserController;
 */
 
 Route::resource('users', UserController::class);
+Route::resource('tables', UserController::class);
 
 
 Auth::routes();
