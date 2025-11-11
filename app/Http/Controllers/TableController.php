@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Table;
 
 class TableController extends Controller
 {
@@ -11,7 +12,8 @@ class TableController extends Controller
      */
     public function index()
     {
-        //
+        $tables = Table::all();
+        return view('tables_crud.ver_crear_mesas', compact('tables'));
     }
 
     /**
@@ -27,7 +29,11 @@ class TableController extends Controller
      */
     public function store(Request $request)
     {
-        //
+     $table = new Table;
+        $table->table_number = $request->table_number;
+        $table->table_status = $request->table_status;
+        $table->save();
+        return redirect()->route('tables.index')->with('success', 'Mesa creada exitosamente.');
     }
 
     /**
@@ -43,7 +49,8 @@ class TableController extends Controller
      */
     public function edit(string $id)
     {
-        //
+        $table = Table::findOrFail($id);
+        return view('tables_crud.editar_mesa', compact('table'));
     }
 
     /**
@@ -51,7 +58,11 @@ class TableController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $table = Table::findOrFail($id);
+        $table->table_number = $request->table_number;
+        $table->table_status = $request->table_status;
+        $table->save();
+        return redirect()->route('tables.index')->with('success', 'Mesa actualizada exitosamente.');
     }
 
     /**
@@ -59,6 +70,8 @@ class TableController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $table = Table::findOrFail($id);
+        $table->delete();
+        return redirect()->route('tables.index')->with('success', 'Mesa eliminada exitosamente.');
     }
 }

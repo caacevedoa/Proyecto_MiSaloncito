@@ -9,36 +9,28 @@
 
     <form action="{{route('tables.store')}}" method="post">
         @csrf
-        <label for="name">Nombre:</label>
-        <input type="text" name="name" id="name"><br>
+        <label for="table_number">Número de mesa:</label>
+        <input type="text" name="table_number" id="table_number"><br>
 
-        <label for="email">Email:</label>
-        <input type="email" name="email" id="email"><br>
-
-        <label for="password">Contraseña:</label>
-        <input type="password" name="password" id="password"><br>
-
-
-        <label for="role">Seleccione el rol:</label>
-        <select name="role" id="role">
-            <option value="administrador">Administrador</option>
-            <option value="mesero">Mesero</option>
-            <option value="gerencia">Gerencia</option>
+        <label for="table_status">Seleccione el estado de la mesa:</label>
+        <select name="table_status" id="table_status">
+            <option value="libre">Libre</option>
+            <option value="ocupada">Ocupada</option>
+            <option value="reservada">Reservada</option>
         </select><br>
 
-        <button type="submit">Crear Usuario</button>
+        <button type="submit">Crear Mesa</button>
 
     </form>
 
-    <h1>Listado de usuarios</h1>
+    <h1>Listado de mesas</h1>
 
     <table border="1">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th>Rol</th>
+                <th>Número de Mesa</th>
+                <th>Estado</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -46,9 +38,8 @@
             @foreach ($tables as $table)
                 <tr>
                     <td>{{ $table->id }}</td>
-                    <td>{{ $table->name }}</td>
-                    <td>{{ $table->email }}</td>
-                    <td>{{ $table->role }}</td>
+                    <td>{{ $table->table_number }}</td>
+                    <td>{{ $table->table_status }}</td>
                     <td>
                         <a href="{{ route('tables.edit', $table->id) }}">Editar</a>
                         <form action="{{ route('tables.destroy', $table->id) }}" method="POST" style="display:inline;">

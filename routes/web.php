@@ -16,7 +16,7 @@ use App\Http\Controllers\TableController;
 */
 
 Route::resource('users', UserController::class);
-Route::resource('tables', UserController::class);
+Route::resource('tables', TableController::class);
 
 
 Auth::routes();
