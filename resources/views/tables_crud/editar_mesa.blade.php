@@ -21,7 +21,7 @@
             <option value="reservada">Reservada</option>
         </select><br>
 
-        <button type="submit">Crear Mesa</button>
+        <button type="submit">Editar Mesa</button>
 
 
     </form>
