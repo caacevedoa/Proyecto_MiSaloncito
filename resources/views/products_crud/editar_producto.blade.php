@@ -19,7 +19,6 @@
         <label for="unit_price">Precio Unitario:</label>
         <input type="number" name="unit_price" id="unit_price" value="{{ $product->unit_price }}"><br>
 
-
         <label for="product_status">Seleccione el estado del producto:</label>
         <select name="product_status" id="product_status">
             <option value="activo">Activo</option>

@@ -7,42 +7,53 @@
 </head>
 <body>
 
-    <form action="{{route('tables.store')}}" method="post">
+    <form action="{{route('products.store')}}" method="post">
         @csrf
-        <label for="table_number">Número de mesa:</label>
-        <input type="text" name="table_number" id="table_number"><br>
+        <label for="product_name">Nombre del producto:</label>
+        <input type="text" name="product_name" id="product_name"><br>
 
-        <label for="table_status">Seleccione el estado de la mesa:</label>
-        <select name="table_status" id="table_status">
-            <option value="libre">Libre</option>
-            <option value="ocupada">Ocupada</option>
-            <option value="reservada">Reservada</option>
+        <label for="product_type">Tipo de producto:</label>
+        <input type="text" name="product_type" id="product_type"><br>
+
+        <label for="unit_price">Precio unitario:</label>
+        <input type="number" name="unit_price" id="unit_price" step="100"><br>
+
+        <label for="product_status">Seleccione del producto:</label>
+        <select name="product_status" id="product_status">
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+
+
         </select><br>
 
-        <button type="submit">Crear Mesa</button>
+        <button type="submit">Crear Producto</button>
 
     </form>
 
-    <h1>Listado de mesas</h1>
+    <h1>Listado de productos</h1>
 
     <table border="1">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Número de Mesa</th>
+                <th>Nombre del prodcuto</th>
+                <th>Tipo de producto</th>
+                <th>Precio</th>
                 <th>Estado</th>
                 <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($tables as $table)
+            @foreach ($products as $product)
                 <tr>
-                    <td>{{ $table->id }}</td>
-                    <td>{{ $table->table_number }}</td>
-                    <td>{{ $table->table_status }}</td>
+                    <td>{{ $product->id }}</td>
+                    <td>{{ $product->product_name }}</td>
+                    <td>{{ $product->product_type }}</td>
+                    <td>{{ $product->unit_price }}</td>
+                    <td>{{ $product->product_status }}</td>
                     <td>
-                        <a href="{{ route('tables.edit', $table->id) }}">Editar</a>
-                        <form action="{{ route('tables.destroy', $table->id) }}" method="POST" style="display:inline;">
+                        <a href="{{ route('products.edit', $product->id) }}">Editar</a>
+                        <form action="{{ route('products.destroy', $product->id) }}" method="POST" style="display:inline;">
                             @csrf
                             @method('DELETE')
                             <button type="submit">Eliminar</button>
@@ -51,7 +62,7 @@
                 </tr>
             @endforeach
         </tbody>
-    </table>
+</table>
     
 </body>
 </html>
