@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->string('product_name');
-            $table->string('product_type');
+            $table->enum('product_type', ['Panaderia', 'Desayunos', 'Almuerzos', 'Bebidas', 'Especiales', 'Otros']);
             $table->decimal('unit_price', 8, 2);
-            $table->enum('product_status', ['activo', 'inactivo']);
+            $table->enum('product_status', ['Activo', 'Inactivo']);
             $table->timestamps();
         });
     }

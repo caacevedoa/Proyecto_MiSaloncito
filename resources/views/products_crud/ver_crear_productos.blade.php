@@ -12,13 +12,20 @@
         <label for="product_name">Nombre del producto:</label>
         <input type="text" name="product_name" id="product_name"><br>
 
-        <label for="product_type">Tipo de producto:</label>
-        <input type="text" name="product_type" id="product_type"><br>
+        <label for="product_type">Seleccione el tipo de producto:</label>
+        <select name="product_type" id="product_type">
+            <option value="Panaderia">Panadería</option>
+            <option value="Desayunos">Desayunos</option>
+            <option value="Almuerzos">Almuerzos</option>
+            <option value="Bebidas">Bebidas</option>
+            <option value="Especiales">Especiales</option>
+            <option value="Otros">Otros</option>
+        </select><br>
 
         <label for="unit_price">Precio unitario:</label>
         <input type="number" name="unit_price" id="unit_price" step="100"><br>
 
-        <label for="product_status">Seleccione del producto:</label>
+        <label for="product_status">Seleccione estado del producto:</label>
         <select name="product_status" id="product_status">
             <option value="activo">Activo</option>
             <option value="inactivo">Inactivo</option>
