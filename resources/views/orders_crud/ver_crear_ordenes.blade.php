@@ -6,14 +6,10 @@
     <title>Órdenes</title>
 </head>
 <body>
-
     <h1>Crear Orden</h1>
 
     <form action="{{ route('orders.store') }}" method="post">
         @csrf
-
-        <label for="order_datetime">Fecha y hora:</label>
-        <input type="datetime-local" name="order_datetime" id="order_datetime"><br>
 
         <label for="user_id">Seleccione el usuario (mesero):</label>
         <select name="user_id" id="user_id">
@@ -64,7 +60,7 @@
                     <td>{{ $order->order_datetime }}</td>
                     <td>{{ $order->user->name }}</td>
                     <td>Mesa #{{ $order->table->table_number }}</td>
-                    <td>{{ $order->order_status }}</td>
+                    <td>{{ $order->status }}</td>
 
                     <td>
                         <a href="{{ route('orders.edit', $order->id) }}">Editar</a>

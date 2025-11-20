@@ -17,39 +17,27 @@ class OrderController extends Controller
     $orders = Order::with('user', 'table')->get();
     $users = User::all();
     $tables = Table::all();
-
     return view('orders_crud.ver_crear_ordenes', compact('orders', 'users', 'tables'));
 }
 
-
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         // Obtener datos para los selects
         $users = User::all();
         $tables = Table::all();
-
         return view('orders_crud.crear_orden', compact('users', 'tables'));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
+   
     public function store(Request $request)
     {
         $order = new Order;
-
-        $order->order_datetime = $request->order_datetime;
+        $order->order_datetime = now();
         $order->status = $request->status;
-
         // Foreign Keys
         $order->user_id = $request->user_id;
         $order->table_id = $request->table_id;
-
         $order->save();
-
         return redirect()->route('orders.index')
             ->with('success', 'Orden creada exitosamente.');
     }
@@ -60,7 +48,6 @@ class OrderController extends Controller
     public function edit(string $id)
     {
         $order = Order::findOrFail($id);
-
         // Datos para selects
         $users = User::all();
         $tables = Table::all();
@@ -75,13 +62,11 @@ class OrderController extends Controller
     {
         $order = Order::findOrFail($id);
 
-        $order->order_datetime = $request->order_datetime;
-        $order->order_status = $request->order_status;
+        $order->order_datetime = $order->order_datetime; 
+        $order->status = $request->status;
         $order->user_id = $request->user_id;
         $order->table_id = $request->table_id;
-
         $order->save();
-
         return redirect()->route('orders.index')
             ->with('success', 'Orden actualizada exitosamente.');
     }
@@ -93,7 +78,6 @@ class OrderController extends Controller
     {
         $order = Order::findOrFail($id);
         $order->delete();
-
         return redirect()->route('orders.index')
             ->with('success', 'Orden eliminada exitosamente.');
     }

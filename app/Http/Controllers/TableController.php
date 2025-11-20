@@ -71,6 +71,9 @@ class TableController extends Controller
     public function destroy(string $id)
     {
         $table = Table::findOrFail($id);
+        if ($table->orders()->exists()) {
+            return redirect()->route('tables.index')->with('error', 'No se puede eliminar la mesa porque tiene órdenes asociadas.');
+        }
         $table->delete();
         return redirect()->route('tables.index')->with('success', 'Mesa eliminada exitosamente.');
     }

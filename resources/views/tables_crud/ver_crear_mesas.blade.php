@@ -1,57 +1,68 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
+@extends('layouts.app')
 
-    <form action="{{route('tables.store')}}" method="post">
-        @csrf
-        <label for="table_number">Número de mesa:</label>
-        <input type="text" name="table_number" id="table_number"><br>
+@section('content')
 
-        <label for="table_status">Seleccione el estado de la mesa:</label>
-        <select name="table_status" id="table_status">
-            <option value="libre">Libre</option>
-            <option value="ocupada">Ocupada</option>
-            <option value="reservada">Reservada</option>
-        </select><br>
+<div class="p-4">
 
-        <button type="submit">Crear Mesa</button>
+    <div class="container">
 
-    </form>
+        <h2 class="mb-4">Crear Mesa</h2>
 
-    <h1>Listado de mesas</h1>
+        <form action="{{ route('tables.store') }}" method="post" class="mb-5">
+            @csrf
 
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Número de Mesa</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($tables as $table)
+            <div class="mb-3">
+                <label for="table_number" class="form-label">Número de mesa:</label>
+                <input type="text" name="table_number" id="table_number" class="form-control">
+            </div>
+
+            <div class="mb-3">
+                <label for="table_status" class="form-label">Seleccione el estado de la mesa:</label>
+                <select name="table_status" id="table_status" class="form-select">
+                    <option value="libre">Libre</option>
+                    <option value="ocupada">Ocupada</option>
+                    <option value="reservada">Reservada</option>
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Crear Mesa</button>
+        </form>
+
+        <h1 class="mb-3">Listado de Mesas</h1>
+
+        <table class="table table-bordered table-striped">
+            <thead class="table-dark">
                 <tr>
-                    <td>{{ $table->id }}</td>
-                    <td>{{ $table->table_number }}</td>
-                    <td>{{ $table->table_status }}</td>
-                    <td>
-                        <a href="{{ route('tables.edit', $table->id) }}">Editar</a>
-                        <form action="{{ route('tables.destroy', $table->id) }}" method="POST" style="display:inline;">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit">Eliminar</button>
-                        </form>
-                    </td>
+                    <th>ID</th>
+                    <th>Número de Mesa</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
-    
-</body>
-</html>
+            </thead>
+            <tbody>
+                @foreach ($tables as $table)
+                    <tr>
+                        <td>{{ $table->id }}</td>
+                        <td>{{ $table->table_number }}</td>
+                        <td>{{ $table->table_status }}</td>
+                        <td class="d-flex gap-2">
+
+                            <a href="{{ route('tables.edit', $table->id) }}" class="btn btn-warning btn-sm">Editar</a>
+
+                            <form action="{{ route('tables.destroy', $table->id) }}" method="POST">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                            </form>
+
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+@endsection
