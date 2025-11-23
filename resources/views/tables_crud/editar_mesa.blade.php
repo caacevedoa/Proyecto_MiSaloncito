@@ -1,64 +1,45 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Orden</title>
-</head>
-<body>
+@extends('layouts.app')
 
-    <h1>Editar Orden</h1>
+@section('content')
 
-    <form action="{{ route('orders.update', $order->id) }}" method="post">
-        @method('PUT')
-        @csrf
+<div class="container p-4">
 
-        <label for="order_datetime">Fecha y hora:</label>
-        <input 
-            type="datetime-local" 
-            name="order_datetime" 
-            id="order_datetime"
-            value="{{ \Carbon\Carbon::parse($order->order_datetime)->format('Y-m-d\TH:i') }}"
-        >
-        <br>
+    <h1 class="mb-4">Editar Mesa</h1>
 
-        <label for="user_id">Seleccione el usuario (mesero):</label>
-        <select name="user_id" id="user_id">
-            @foreach ($users as $user)
-                <option 
-                    value="{{ $user->id }}"
-                    @if ($user->id == $order->user_id) selected @endif
+    <div class="card shadow-sm p-4">
+
+        <form action="{{ route('tables.update', $table->id) }}" method="post">
+            @method('PUT')
+            @csrf
+
+            <div class="mb-3">
+                <label for="table_number" class="form-label">Número de mesa:</label>
+                <input 
+                    type="text" 
+                    name="table_number" 
+                    id="table_number"
+                    value="{{ $table->table_number }}"
+                    class="form-control"
                 >
-                    {{ $user->name }}
-                </option>
-            @endforeach
-        </select>
-        <br>
+            </div>
 
-        <label for="table_id">Seleccione la mesa:</label>
-        <select name="table_id" id="table_id">
-            @foreach ($tables as $table)
-                <option 
-                    value="{{ $table->id }}"
-                    @if ($table->id == $order->table_id) selected @endif
-                >
-                    Mesa #{{ $table->table_number }}
-                </option>
-            @endforeach
-        </select>
-        <br>
+            <div class="mb-3">
+                <label for="table_status" class="form-label">Estado de la mesa:</label>
+                <select name="table_status" id="table_status" class="form-select">
+                    <option value="libre"     @if($table->table_status == 'libre') selected @endif>Libre</option>
+                    <option value="ocupada"   @if($table->table_status == 'ocupada') selected @endif>Ocupada</option>
+                    <option value="reservada" @if($table->table_status == 'reservada') selected @endif>Reservada</option>
+                </select>
+            </div>
 
-        <label for="order_status">Estado de la orden:</label>
-        <select name="order_status" id="order_status">
-            <option value="pendiente"   @if($order->order_status == 'pendiente') selected @endif>Pendiente</option>
-            <option value="entregado"   @if($order->order_status == 'entregado') selected @endif>Entregado</option>
-            <option value="cancelado"   @if($order->order_status == 'cancelado') selected @endif>Cancelado</option>
-        </select>
-        <br>
+            <button type="submit" class="btn btn-primary">Actualizar Mesa</button>
 
-        <button type="submit">Actualizar Orden</button>
+            <a href="{{ route('tables.index') }}" class="btn btn-secondary ms-2">Volver</a>
 
-    </form>
+        </form>
 
-</body>
-</html>
+    </div>
+
+</div>
+
+@endsection
