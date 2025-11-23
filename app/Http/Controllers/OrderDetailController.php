@@ -55,32 +55,53 @@ class OrderDetailController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit($id)
+        {
+            $orderDetail = OrderDetail::findOrFail($id);
+            $products = Product::all();
+
+        return view('ordersdetail_crud.editar_detalleorden', compact('orderDetail', 'products'));
+        }
+
+
+        /**
+         * Update the specified resource in storage.
+         */
+    public function update(Request $request, $id)
     {
-        $detail = OrderDetail::findOrFail($id);
-        $orders = Order::all();
-        $products = Product::all();
+        // Validar
+        $validated = $request->validate([
+            'order_id'   => 'required|exists:orders,id',
+            'product_id' => 'required|exists:products,id',
+            'quantity'   => 'required|integer|min:1'
+        ]);
 
-        return view('ordersdetail.editar_detalleorden', compact('detail', 'orders', 'products'));
-    }
+        // Encontrar detalle
+        $orderDetail = OrderDetail::findOrFail($id);
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        $detail = OrderDetail::findOrFail($id);
+        // Obtener el producto
+        $product = Product::findOrFail($request->product_id);
 
-        $detail->order_id = $request->order_id;
-        $detail->product_id = $request->product_id;
-        $detail->quantity = $request->quantity;
-        $detail->unit_price = $request->unit_price;
-        $detail->subtotal = $request->quantity * $request->unit_price;
-        $detail->save();
+        // Asignar datos
+        $orderDetail->order_id   = $request->order_id;
+        $orderDetail->product_id = $request->product_id;
+        $orderDetail->quantity   = $request->quantity;
+
+        // ASIGNAR EL PRECIO AUTOMÁTICAMENTE
+        $orderDetail->unit_price = $product->unit_price;
+
+        // Calcular subtotal
+        $orderDetail->subtotal = $product->unit_price * $request->quantity;
+
+        // Guardar
+        $orderDetail->save();
 
         return redirect()->route('ordersdetail.index')
-            ->with('success', 'Detalle de orden actualizado exitosamente.');
+                        ->with('success', 'Detalle actualizado correctamente');
     }
+
+
+
 
     /**
      * Remove the specified resource from storage.

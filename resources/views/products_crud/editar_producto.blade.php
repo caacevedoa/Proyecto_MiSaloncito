@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Editar Producto</title>
 </head>
 <body>
-
+    
+    <h1>Editar Producto</h1>
     <form action="{{route('products.update', $product->id)}}" method="post">
         @method('PUT')
         @csrf

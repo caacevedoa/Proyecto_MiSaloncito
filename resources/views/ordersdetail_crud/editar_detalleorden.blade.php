@@ -7,52 +7,33 @@
 </head>
 <body>
 
-    <h1>Editar Detalle de Orden</h1>
+<h1>Editar Detalle de Orden</h1>
 
-    <form action="{{ route('ordersdetail.update', $orderDetail->id) }}" method="post">
-        @method('PUT')
-        @csrf
+<form action="{{ route('ordersdetail.update', $orderDetail->id) }}" method="post">
+    @method('PUT')
+    @csrf
 
-        <label for="order_id">ID de Orden:</label>
-        <input 
-            type="text" 
-            name="order_id" 
-            id="order_id"
-            value="{{ $orderDetail->order_id }}"
-        >
-        <br>
+    <label for="order_id">Orden:</label>
+    <input type="text" name="order_id" value="{{ $orderDetail->order_id }}" readonly>
+    <br>
 
-        <label for="product">Producto:</label>
-        <input 
-            type="text" 
-            name="product" 
-            id="product"
-            value="{{ $orderDetail->product }}"
-        >
-        <br>
+    <label for="product_id">Producto:</label>
+    <select name="product_id" id="product_id">
+        @foreach ($products as $product)
+            <option value="{{ $product->id }}" 
+                {{ $product->id == $orderDetail->product_id ? 'selected' : '' }}>
+                {{ $product->product_name }}
+            </option>
+        @endforeach
+    </select>
+    <br>
 
-        <label for="quantity">Cantidad:</label>
-        <input 
-            type="number" 
-            name="quantity" 
-            id="quantity"
-            value="{{ $orderDetail->quantity }}"
-        >
-        <br>
+    <label for="quantity">Cantidad:</label>
+    <input type="number" name="quantity" value="{{ $orderDetail->quantity }}">
+    <br>
 
-        <label for="price">Precio:</label>
-        <input 
-            type="number" 
-            step="0.01"
-            name="price" 
-            id="price"
-            value="{{ $orderDetail->price }}"
-        >
-        <br>
-
-        <button type="submit">Actualizar Detalle</button>
-
-    </form>
+    <button type="submit">Actualizar Detalle</button>
+</form>
 
 </body>
 </html>
