@@ -50,6 +50,7 @@
         <thead>
             <tr>
                 <th>ID</th>
+                <th>Orden</th>
                 <th>Fecha y hora</th>
                 <th>Método de pago</th>
                 <th>Total</th>
@@ -61,6 +62,7 @@
             @foreach ($payments as $payment)
                 <tr>
                     <td>{{ $payment->id }}</td>
+                    <td>{{ $payment->order->id }}</td>
                     <td>{{ $payment->payment_date }}</td>
                     <td>{{ $payment->payment_method }}</td>
                     <td>{{ $payment->total_pay }}</td>
