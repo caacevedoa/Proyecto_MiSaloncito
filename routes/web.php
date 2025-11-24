@@ -7,6 +7,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderDetailController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\MetricController;
 
 // Ruta para la raíz del sitio
 Route::get('/', function () {
@@ -20,6 +21,7 @@ Route::resource('products', ProductController::class);
 Route::resource('orders', OrderController::class);
 Route::resource('ordersdetail', OrderDetailController::class);
 Route::resource('payments', PaymentController::class);
+Route::resource('metrics', MetricController::class);
 
 Auth::routes();
 

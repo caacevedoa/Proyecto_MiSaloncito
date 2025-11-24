@@ -1,49 +1,87 @@
-@extends('layouts.app')
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Principal - MiSaloncito</title>
 
-@section('content')
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">{{ __('Dashboard') }}</div>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            font-family: "Segoe UI", sans-serif;
+        }
 
-                <div class="card-body">
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 25px;
+            text-align: center;
+            font-size: 28px;
+            font-weight: bold;
+        }
 
-                    @if (session('status'))
-                        <div class="alert alert-success" role="alert">
-                            {{ session('status') }}
-                        </div>
-                    @endif
+        .container {
+            max-width: 900px;
+            margin: 40px auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 25px;
+        }
 
-                    <h4 class="mb-3">Bienvenido al sistema</h4>
+        .card {
+            background-color: white;
+            width: 260px;
+            height: 150px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            font-weight: 600;
+            color: #2c3e50;
+            text-decoration: none;
+            transition: 0.2s ease-in-out;
+        }
 
-                    <div class="d-grid gap-2">
+        .card:hover {
+            transform: scale(1.04);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+        }
 
-                        <a href="{{ route('orders.index') }}" class="btn btn-primary">
-                            📦 Gestionar Órdenes
-                        </a>
+        .footer {
+            margin-top: 60px;
+            padding: 20px;
+            background-color: #2c3e50;
+            color: white;
+            text-align: center;
+            font-size: 14px;
+        }
 
-                        <a href="{{ route('ordersdetail.index') }}" class="btn btn-secondary">
-                            🧾 Detalles de Órdenes
-                        </a>
+    </style>
+</head>
+<body>
 
-                        <a href="{{ route('products.index') }}" class="btn btn-success">
-                            🛒 Productos
-                        </a>
-
-                        <a href="{{ route('tables.index') }}" class="btn btn-warning">
-                            🍽️ Mesas
-                        </a>
-
-                        <a href="{{ route('users.index') }}" class="btn btn-dark">
-                            👤 Usuarios
-                        </a>
-
-                    </div>
-
-                </div>
-            </div>
-        </div>
+    <div class="header">
+        Panel Administrativo - MiSaloncito
     </div>
-</div>
-@endsection
+
+    <div class="container">
+        <a class="card" href="{{ route('tables.index') }}">Mesas</a>
+        <a class="card" href="{{ route('products.index') }}">Productos</a>
+        <a class="card" href="{{ route('orders.index') }}">Órdenes</a>
+        <a class="card" href="{{ route('ordersdetail.index') }}">Detalles Orden</a>
+        <a class="card" href="{{ route('payments.index') }}">Pagos</a>
+        <a class="card" href="{{ route('metrics.index') }}">Métricas</a>
+        <a class="card" href="{{ route('users.index') }}">Usuarios</a>
+    </div>
+
+    <div class="footer">
+        Sistema de Gestión del MiSaloncito © {{ date("Y") }}
+    </div>
+
+</body>
+</html>
