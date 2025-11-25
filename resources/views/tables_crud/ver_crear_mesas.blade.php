@@ -5,7 +5,7 @@
 <div class="p-4">
     <div class="container">
 
-        {{-- SECCIÓN CREAR (Se mantiene igual) --}}
+        {{-- SECCIÓN CREAR --}}
         <h2 class="mb-4">Crear Mesa</h2>
 
         <form action="{{ route('tables.store') }}" method="post" class="mb-5">
@@ -27,96 +27,86 @@
             <button type="submit" class="btn btn-primary">Crear Mesa</button>
         </form>
 
-        <hr> {{-- Separador visual --}}
+        <hr>
 
-        {{-- SECCIÓN LISTADO CON EDICIÓN EN LÍNEA --}}
+        {{-- LISTADO --}}
         <h1 class="mb-3">Listado de Mesas</h1>
 
-        <table class="table table-bordered table-striped align-middle"> {{-- align-middle centra verticalmente --}}
+        <table class="table table-bordered table-striped align-middle">
             <thead class="table-dark">
                 <tr>
                     <th>ID</th>
                     <th>Número de Mesa</th>
-                    <th style="width: 35%;">Estado (Cambio Rápido)</th> {{-- Ancho ajustado para el select --}}
+                    <th>Estado Actual</th> {{-- ← NUEVA COLUMNA --}}
+                    <th style="width: 35%;">Estado (Cambio Rápido)</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
+
             <tbody>
                 @foreach ($tables as $table)
                     <tr>
                         <td>{{ $table->id }}</td>
-                        
-                        {{-- Muestra el número de mesa (si quieres editar esto, usas el botón amarillo de editar completo) --}}
                         <td>{{ $table->table_number }}</td>
 
-                        {{-- AQUÍ ESTÁ EL CAMBIO: Formulario para editar estado --}}
+                        {{-- ESTADO ACTUAL --}}
                         <td>
-                            <form action="{{ route('tables.update', $table->id) }}" method="POST" class="d-flex gap-2">
-                                @csrf
-                                @method('PUT')
-
-                                {{-- Importante: Si tu validación requiere table_number, enviamos el actual oculto --}}
-                                <input type="hidden" name="table_number" value="{{ $table->table_number }}">
-
-                                {{-- Selector de estado --}}
-                                <select name="table_status" class="form-select form-select-sm">
-                                    <option value="libre" {{ $table->table_status == 'libre' ? 'selected' : '' }}>
-                                        Libre
-                                    </option>
-                                    <option value="ocupada" {{ $table->table_status == 'ocupada' ? 'selected' : '' }}>
-                                        Ocupada
-                                    </option>
-                                    <option value="reservada" {{ $table->table_status == 'reservada' ? 'selected' : '' }}>
-                                        Reservada
-                                    </option>
-                                </select>
-
-                                {{-- Botón para guardar solo el estado --}}
-                                <button type="submit" class="btn btn-success btn-sm" title="Actualizar Estado">
-                                    Actualizar
-                                </button>
-                            </form>
+                            @if($table->table_status == 'libre')
+                                <span class="badge bg-success">Libre</span>
+                            @elseif($table->table_status == 'ocupada')
+                                <span class="badge bg-warning text-dark">Ocupada</span>
+                            @elseif($table->table_status == 'reservada')
+                                <span class="badge bg-info text-dark">Reservada</span>
+                            @endif
                         </td>
 
-                        {{-- Columna de Eliminar y Editar completo --}}
-                        <td class="d-flex gap-2">
+                        {{-- BOTONES DE CAMBIO RÁPIDO --}}
+                        <td>
+                            <div class="d-flex gap-2">
 
-                        <form action="{{ route('tables.cambiarEstado', ['id' => $table->id, 'estado' => 'libre']) }}" method="POST">
-                            @csrf
-                            @method('PATCH')
-                            <button class="btn btn-success btn-sm">Libre</button>
-                        </form>
+                                <form action="{{ route('tables.cambiarEstado', ['id' => $table->id, 'estado' => 'libre']) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button class="btn btn-success btn-sm">Libre</button>
+                                </form>
 
-                        <form action="{{ route('tables.cambiarEstado', ['id' => $table->id, 'estado' => 'ocupada']) }}" method="POST">
-                            @csrf
-                            @method('PATCH')
-                            <button class="btn btn-warning btn-sm">Ocupada</button>
-                        </form>
+                                <form action="{{ route('tables.cambiarEstado', ['id' => $table->id, 'estado' => 'ocupada']) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button class="btn btn-warning btn-sm">Ocupada</button>
+                                </form>
 
-                        <form action="{{ route('tables.cambiarEstado', ['id' => $table->id, 'estado' => 'reservada']) }}" method="POST">
-                            @csrf
-                            @method('PATCH')
-                            <button class="btn btn-info btn-sm">Reservada</button>
-                        </form>
+                                <form action="{{ route('tables.cambiarEstado', ['id' => $table->id, 'estado' => 'reservada']) }}" method="POST">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button class="btn btn-info btn-sm">Reservada</button>
+                                </form>
 
-                        <!-- Bloque separado para Editar y Eliminar -->
-                        <div class="d-flex gap-2 ms-3 border-start ps-3">
+                            </div>
+                        </td>
 
-                            <a href="{{ route('tables.edit', $table->id) }}" class="btn btn-secondary btn-sm">Editar</a>
+                        {{-- ACCIONES --}}
+                        <td>
+                            <div class="d-flex gap-2">
+                                <a href="{{ route('tables.edit', $table->id) }}" class="btn btn-secondary btn-sm">
+                                    Editar
+                                </a>
 
-                            {{-- Formulario Eliminar --}}
-                            <form action="{{ route('tables.destroy', $table->id) }}" method="POST">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="btn btn-secondary btn-sm">Eliminar</button>
-                            </form>
+                                <form action="{{ route('tables.destroy', $table->id) }}" method="POST">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="btn btn-danger btn-sm"
+                                        onclick="return confirm('¿Estás seguro de eliminar esta mesa?')">
+                                        Eliminar
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
 
-                        </div>
-
-                    </td>
                     </tr>
                 @endforeach
             </tbody>
+
         </table>
 
     </div>
