@@ -40,7 +40,7 @@
 <body>
 
     <!-- LOGO -->
-    <img src="{{ public_path('images/logo.png') }}" class="logo">
+    <img src="{{ public_path('logo.png') }}" class="logo">
 
     <p class="center"><strong>MI SALONCITO</strong></p>
     <p class="center">NIT: 901.693.558</p>
