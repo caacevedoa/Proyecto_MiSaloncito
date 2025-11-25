@@ -12,12 +12,18 @@ class OrderDetailController extends Controller
     /**
      * Display a listing of the resource + create form.
      */
-    public function index()
+        public function index()
     {
-        $details = OrderDetail::with('order', 'product')->get();
+        // 1. Obtener los detalles y precargar las relaciones (para evitar N+1)
+        $details = OrderDetail::with(['order.table', 'product'])
+                            ->orderBy('order_id', 'desc') // <-- APLICAMOS ORDEN DESCENDENTE POR order_id
+                            ->get();
+        
+        // 2. Obtener las órdenes y productos para el formulario de creación
         $orders = Order::all();
         $products = Product::all();
-
+        
+        // 3. Pasar a la vista
         return view('ordersdetail_crud.ver_crear_detallesorden', compact('details', 'orders', 'products'));
     }
 
@@ -26,37 +32,42 @@ class OrderDetailController extends Controller
      */
     public function store(Request $request)
 {
-    $product = Product::findOrFail($request->product_id);
-
-    $unit_price = $product->price;
-    $subtotal = $unit_price * $request->quantity;
-
-    OrderDetail::create([
-        'order_id' => $request->order_id,
-        'product_id' => $request->product_id,
-        'quantity' => $request->quantity,
-        'unit_price' => $unit_price,
-        'subtotal' => $subtotal,
+    // ✅ Validación (se conserva la de tu compañero)
+    $request->validate([
+        'order_id' => 'required|exists:orders,id',
+        'product_id' => 'required|exists:products,id',
+        'quantity' => 'required|integer|min:1',
     ]);
 
-    return redirect()->route('ordersdetail.index');
+    // ✅ Obtener producto con precio correcto
+    $product = Product::findOrFail($request->product_id);
 
-    // Obtener producto
-    $product = Product::find($request->product_id);
+    // Determinar precio unitario (tu compañero usa unit_price, tú price)
+    $unit_price = $product->unit_price ?? $product->price;
 
-    // Crear detalle
-    $orderDetail = new OrderDetail();
-    $orderDetail->order_id = $request->order_id;
-    $orderDetail->product_id = $product->id;
-    $orderDetail->quantity = $request->quantity;
-    $orderDetail->unit_price = $product->unit_price;
-    $orderDetail->subtotal = $product->unit_price * $request->quantity;
+    // Calcular subtotal
+    $subtotal = $unit_price * $request->quantity;
 
-    $orderDetail->save();
+    // ✅ Crear el detalle de orden
+    $orderDetail = OrderDetail::create([
+        'order_id'   => $request->order_id,
+        'product_id' => $product->id,
+        'quantity'   => $request->quantity,
+        'unit_price' => $unit_price,
+        'subtotal'   => $subtotal,
+    ]);
 
-    return redirect()->route('ordersdetail.index', $request->order_id)
-                     ->with('success', 'Producto agregado correctamente');
-    }   
+    // ✅ Recalcular total de la orden
+    $order = Order::find($request->order_id);
+    if (method_exists($order, 'calculateTotal')) {
+        $order->calculateTotal();
+    }
+
+    // Redirigir
+    return redirect()
+        ->route('ordersdetail.index')
+        ->with('success', 'Producto agregado y total actualizado correctamente');
+}
 
 
 
@@ -109,11 +120,6 @@ class OrderDetailController extends Controller
     }
 
 
-
-
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(string $id)
     {
         $detail = OrderDetail::findOrFail($id);

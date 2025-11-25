@@ -36,10 +36,16 @@
         <br>
 
         <button type="submit">Crear Orden</button>
-
     </form>
-
-
+    
+    @if(session('success'))
+        <p style="color: green; font-weight: bold;">{{ session('success') }}</p>
+    @endif
+    
+    @if(session('error'))
+        <p style="color: red; font-weight: bold;">{{ session('error') }}</p>
+    @endif
+    
     <h1>Listado de Órdenes</h1>
 
     <table border="1">
@@ -63,26 +69,38 @@
                     <td>{{ $order->user->name }}</td>
                     <td>Mesa #{{ $order->table->table_number }}</td>
                     <td>{{ $order->status }}</td>
-                    <td>
-                        ${{ number_format($order->details->sum(function ($d) {
-                                return $d->quantity * $d->unit_price;
-                            }), 0, ',', '.') }}
-                    </td>
 
                     <td>
-                        <a href="{{ route('orders.edit', $order->id) }}">Editar</a>
+                        ${{ number_format(
+                            $order->details->sum(fn($d) => $d->quantity * $d->unit_price),
+                            0, ',', '.'
+                        ) }}
+                    </td>
 
-                        <form action="{{ route('orders.destroy', $order->id) }}" method="POST" style="display:inline;">
+                    <td>
+                        <a href="{{ route('orders.edit', $order->id) }}">Editar</a> |
+                        <a href="{{ route('payments_order.pay', $order->id) }}">Pagar</a> |
+                        <a href="{{ route('payments.invoice', $order->id) }}">Ver Factura</a> |
+                        <a href="{{ route('factura.pdf', $order->id) }}">Descargar Factura</a>
+
+                        <form action="{{ route('orders.destroy', $order->id) }}" 
+                              method="POST" style="display:inline;">
                             @csrf
                             @method('DELETE')
                             <button type="submit">Eliminar</button>
-
-                        <a href="{{ route('payments_order.pay', $order->id) }}">Pagar</a>
-                        <a href="{{ route('payments.invoice', $order->id) }}" class="btn btn-primary btn-sm">Ver Factura</a>
-                        <a href="{{ route('factura.pdf', $order->id) }}" class="btn btn-primary btn-sm">Descargar Factura</a>
-
                         </form>
-                        
+
+                        <hr style="margin: 5px 0;">
+
+                        <form action="{{ route('orders.recalculate', $order->id) }}" 
+                              method="POST" style="display:inline;">
+                            @csrf
+                            <button type="submit"
+                                style="background-color: #007bff; color: white;
+                                       border: none; padding: 5px 8px; cursor: pointer;">
+                                Actualizar Total 🔄
+                            </button>
+                        </form>
                     </td>
                 </tr>
             @endforeach

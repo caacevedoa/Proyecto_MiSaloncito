@@ -32,7 +32,12 @@ Route::get('/factura/{id}', [PaymentController::class, 'invoice'])->name('paymen
 Route::get('/factura/{id}/pdf', [ReceiptController::class, 'descargarFactura'])
     ->name('factura.pdf');
 
+Route::post('orders/{order}/recalculate', 
+    [App\Http\Controllers\OrderController::class, 'recalculate'])
+    ->name('orders.recalculate');;
 
 Auth::routes();
-
+Route::post('metrics/{metric}/update-data', 
+    [App\Http\Controllers\MetricController::class, 'updateMetric'])
+    ->name('metrics.update_data');
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');

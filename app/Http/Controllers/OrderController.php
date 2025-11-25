@@ -81,4 +81,15 @@ class OrderController extends Controller
         return redirect()->route('orders.index')
             ->with('success', 'Orden eliminada exitosamente.');
     }
+
+        public function recalculate(Order $order)
+    {
+        // Llama al método del modelo que hace el trabajo pesado
+        $order->calculateTotal();
+
+        // Redirecciona de vuelta a donde se listan los detalles, o al listado principal
+        // Asumo que quieres ver la lista de órdenes actualizada
+        return redirect()->back()->with('success', 
+            'Total de la Orden #' . $order->id . ' actualizado correctamente.');
+    }
 }
