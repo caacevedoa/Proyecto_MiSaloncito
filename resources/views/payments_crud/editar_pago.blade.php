@@ -6,7 +6,7 @@
     <title>Editar Pago</title>
 </head>
 <body>
-    
+
     <h1>Editar Pago</h1>
     <form action="{{route('payments.update', $payment->id)}}" method="post">
         @method('PUT')

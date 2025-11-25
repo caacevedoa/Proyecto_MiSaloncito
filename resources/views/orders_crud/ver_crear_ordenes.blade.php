@@ -6,8 +6,8 @@
     <title>Órdenes</title>
 </head>
 <body>
-    <h1>Crear Orden</h1>
 
+    <h1>Crear Orden</h1>
     <form action="{{ route('orders.store') }}" method="post">
         @csrf
 
@@ -38,6 +38,7 @@
         <button type="submit">Crear Orden</button>
 
     </form>
+
 
     <h1>Listado de Órdenes</h1>
 

@@ -6,7 +6,7 @@
     <title>Editar Producto</title>
 </head>
 <body>
-    
+
     <h1>Editar Producto</h1>
     <form action="{{route('products.update', $product->id)}}" method="post">
         @method('PUT')

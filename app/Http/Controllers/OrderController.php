@@ -25,7 +25,7 @@ class OrderController extends Controller
         // Obtener datos para los selects
         $users = User::all();
         $tables = Table::all();
-        return view('orders_crud.crear_orden', compact('users', 'tables'));
+        return view('orders_crud.ver_crear_ordenes', compact('users', 'tables'));
     }
 
    
