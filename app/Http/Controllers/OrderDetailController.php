@@ -32,35 +32,43 @@ class OrderDetailController extends Controller
      */
     public function store(Request $request)
 {
-    // Validación
+    // ✅ Validación (se conserva la de tu compañero)
     $request->validate([
         'order_id' => 'required|exists:orders,id',
         'product_id' => 'required|exists:products,id',
         'quantity' => 'required|integer|min:1',
     ]);
 
-    // 1. Obtener producto (para precio)
-    $product = Product::find($request->product_id);
+    // ✅ Obtener producto con precio correcto
+    $product = Product::findOrFail($request->product_id);
 
-    // 2. Crear detalle (cálculo del subtotal)
-    $orderDetail = new OrderDetail();
-    $orderDetail->order_id = $request->order_id;
-    $orderDetail->product_id = $product->id;
-    $orderDetail->quantity = $request->quantity;
-    $orderDetail->unit_price = $product->unit_price;
-    $orderDetail->subtotal = $product->unit_price * $request->quantity;
+    // Determinar precio unitario (tu compañero usa unit_price, tú price)
+    $unit_price = $product->unit_price ?? $product->price;
 
-    $orderDetail->save();
-    
-    // 3. RECÁLCULO DEL TOTAL DE LA ORDEN (LA CORRECCIÓN) 🔑
+    // Calcular subtotal
+    $subtotal = $unit_price * $request->quantity;
+
+    // ✅ Crear el detalle de orden
+    $orderDetail = OrderDetail::create([
+        'order_id'   => $request->order_id,
+        'product_id' => $product->id,
+        'quantity'   => $request->quantity,
+        'unit_price' => $unit_price,
+        'subtotal'   => $subtotal,
+    ]);
+
+    // ✅ Recalcular total de la orden
     $order = Order::find($request->order_id);
-    $order->calculateTotal();
-    
-    // 4. Redireccionar
-    // La ruta ordersdetail.index probablemente necesita el ID de la orden para saber qué detalles mostrar
-    return redirect()->route('ordersdetail.index', $request->order_id) 
-                     ->with('success', 'Producto agregado y total actualizado correctamente');
+    if (method_exists($order, 'calculateTotal')) {
+        $order->calculateTotal();
+    }
+
+    // Redirigir
+    return redirect()
+        ->route('ordersdetail.index')
+        ->with('success', 'Producto agregado y total actualizado correctamente');
 }
+
 
 
     /**

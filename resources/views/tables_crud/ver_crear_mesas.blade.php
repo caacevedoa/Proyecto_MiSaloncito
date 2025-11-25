@@ -80,16 +80,40 @@
 
                         {{-- Columna de Eliminar y Editar completo --}}
                         <td class="d-flex gap-2">
-                            {{-- Botón Editar Completo (por si quieren cambiar el número de mesa) --}}
-                            <a href="{{ route('tables.edit', $table->id) }}" class="btn btn-warning btn-sm">Editar</a>
+
+                        <form action="{{ route('tables.cambiarEstado', ['id' => $table->id, 'estado' => 'libre']) }}" method="POST">
+                            @csrf
+                            @method('PATCH')
+                            <button class="btn btn-success btn-sm">Libre</button>
+                        </form>
+
+                        <form action="{{ route('tables.cambiarEstado', ['id' => $table->id, 'estado' => 'ocupada']) }}" method="POST">
+                            @csrf
+                            @method('PATCH')
+                            <button class="btn btn-warning btn-sm">Ocupada</button>
+                        </form>
+
+                        <form action="{{ route('tables.cambiarEstado', ['id' => $table->id, 'estado' => 'reservada']) }}" method="POST">
+                            @csrf
+                            @method('PATCH')
+                            <button class="btn btn-info btn-sm">Reservada</button>
+                        </form>
+
+                        <!-- Bloque separado para Editar y Eliminar -->
+                        <div class="d-flex gap-2 ms-3 border-start ps-3">
+
+                            <a href="{{ route('tables.edit', $table->id) }}" class="btn btn-secondary btn-sm">Editar</a>
 
                             {{-- Formulario Eliminar --}}
                             <form action="{{ route('tables.destroy', $table->id) }}" method="POST">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('¿Estás seguro?')">Eliminar</button>
+                                <button type="submit" class="btn btn-secondary btn-sm">Eliminar</button>
                             </form>
-                        </td>
+
+                        </div>
+
+                    </td>
                     </tr>
                 @endforeach
             </tbody>

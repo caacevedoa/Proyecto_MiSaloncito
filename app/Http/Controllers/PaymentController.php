@@ -101,4 +101,16 @@ class PaymentController extends Controller
         return view('payments_crud.ver_crear_pagos', compact('id', 'total', 'payments', 'orders'));
 
     }
+    public function invoice($id)
+    
+{
+    $order = Order::with('orderDetails.product')->findOrFail($id);
+    $payment = Payment::where('order_id', $id)->first();
+
+    // Calcular total
+    $total = $order->orderDetails->sum('subtotal');
+
+    return view('payments_crud.factura', compact('order', 'payment', 'total'));
+}
+
 }

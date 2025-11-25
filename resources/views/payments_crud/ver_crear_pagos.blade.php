@@ -7,7 +7,7 @@
 </head>
 <body>
 
-    <h1>Crear Pago</h1>
+    <h1>Registrar pago</h1>
 
     <form action="{{route('payments.store') }}" method="post">
         @csrf
@@ -30,8 +30,8 @@
             <option value="transferencia">Transferencia</option>
         </select><br>
 
-        <label for="total_pay">Total pagado:</label>
-        <input type="number" name="total_pay" id="total_pay" step="100" value="{{$total}}" readonly><br>
+        <label for="total_pay">Total a pagar:</label>
+        <input type="number" name="total_pay" id="total_pay" step="100" value="{{ $total ?? '' }}" readonly><br>
 
         <label for="payment_status">Seleccione el estado del pago:</label>
         <select name="payment_status" id="payment_status">
@@ -68,6 +68,8 @@
                     <td>{{ $payment->total_pay }}</td>
                     <td>{{ $payment->payment_status }}</td>
                     <td>
+                        <a href="{{ route('payments.invoice', $order->id) }}" class="btn btn-primary btn-sm">Ver Factura</a>
+                        <a href="{{ route('factura.pdf', $order->id) }}" class="btn btn-primary btn-sm">Descargar Factura</a>
                         <a href="{{ route('payments.edit', $payment->id) }}">Editar</a>
                         <form action="{{ route('payments.destroy', $payment->id) }}" method="POST" style="display:inline;">
                             @csrf

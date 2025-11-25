@@ -86,4 +86,13 @@ class TableController extends Controller
         $table->delete();
         return redirect()->route('tables.index')->with('success', 'Mesa eliminada exitosamente.');
     }
+
+    public function cambiarEstado($id, $estado)
+{
+    $table = Table::findOrFail($id);
+    $table->table_status = $estado;
+    $table->save();
+
+    return redirect()->back()->with('success', 'Estado actualizado correctamente.');
+}
 }

@@ -36,7 +36,6 @@
         <br>
 
         <button type="submit">Crear Orden</button>
-
     </form>
     
     @if(session('success'))
@@ -57,7 +56,7 @@
                 <th>Usuario</th>
                 <th>Mesa</th>
                 <th>Estado</th>
-                <th>Total (Cálculo en vivo)</th>
+                <th>Total</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -72,30 +71,33 @@
                     <td>{{ $order->status }}</td>
 
                     <td>
-                        ${{ number_format($order->details->sum(function ($d) {
-                                    return $d->quantity * $d->unit_price;
-                                }), 0, ',', '.') }}
+                        ${{ number_format(
+                            $order->details->sum(fn($d) => $d->quantity * $d->unit_price),
+                            0, ',', '.'
+                        ) }}
                     </td>
 
                     <td>
-                        <a href="{{ route('orders.edit', $order->id) }}">Editar</a>
-                        |
-                        <a href="{{ route('payments_order.pay', $order->id) }}">Pagar</a>
-                        |
+                        <a href="{{ route('orders.edit', $order->id) }}">Editar</a> |
+                        <a href="{{ route('payments_order.pay', $order->id) }}">Pagar</a> |
+                        <a href="{{ route('payments.invoice', $order->id) }}">Ver Factura</a> |
+                        <a href="{{ route('factura.pdf', $order->id) }}">Descargar Factura</a>
 
-                        <form action="{{ route('orders.destroy', $order->id) }}" method="POST" style="display:inline;">
+                        <form action="{{ route('orders.destroy', $order->id) }}" 
+                              method="POST" style="display:inline;">
                             @csrf
                             @method('DELETE')
                             <button type="submit">Eliminar</button>
                         </form>
-                        
+
                         <hr style="margin: 5px 0;">
-                        
-                        <form action="{{ route('orders.recalculate', $order->id) }}" method="POST" style="display:inline;">
+
+                        <form action="{{ route('orders.recalculate', $order->id) }}" 
+                              method="POST" style="display:inline;">
                             @csrf
-                            <button type="submit" 
-                                title="Fuerza el recálculo del total y lo guarda en la base de datos."
-                                style="background-color: #007bff; color: white; border: none; padding: 5px 8px; cursor: pointer;">
+                            <button type="submit"
+                                style="background-color: #007bff; color: white;
+                                       border: none; padding: 5px 8px; cursor: pointer;">
                                 Actualizar Total 🔄
                             </button>
                         </form>
