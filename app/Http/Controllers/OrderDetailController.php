@@ -25,13 +25,21 @@ class OrderDetailController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
-    // Validación
-    $request->validate([
-        'order_id' => 'required|exists:orders,id',
-        'product_id' => 'required|exists:products,id',
-        'quantity' => 'required|integer|min:1',
+{
+    $product = Product::findOrFail($request->product_id);
+
+    $unit_price = $product->price;
+    $subtotal = $unit_price * $request->quantity;
+
+    OrderDetail::create([
+        'order_id' => $request->order_id,
+        'product_id' => $request->product_id,
+        'quantity' => $request->quantity,
+        'unit_price' => $unit_price,
+        'subtotal' => $subtotal,
     ]);
+
+    return redirect()->route('ordersdetail.index');
 
     // Obtener producto
     $product = Product::find($request->product_id);

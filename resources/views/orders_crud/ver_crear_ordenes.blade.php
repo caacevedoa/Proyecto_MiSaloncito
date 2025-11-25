@@ -63,6 +63,11 @@
                     <td>{{ $order->user->name }}</td>
                     <td>Mesa #{{ $order->table->table_number }}</td>
                     <td>{{ $order->status }}</td>
+                    <td>
+                        ${{ number_format($order->details->sum(function ($d) {
+                                return $d->quantity * $d->unit_price;
+                            }), 0, ',', '.') }}
+                    </td>
 
                     <td>
                         <a href="{{ route('orders.edit', $order->id) }}">Editar</a>
@@ -73,6 +78,8 @@
                             <button type="submit">Eliminar</button>
 
                         <a href="{{ route('payments_order.pay', $order->id) }}">Pagar</a>
+                        <a href="{{ route('payments.invoice', $order->id) }}" class="btn btn-primary btn-sm">Ver Factura</a>
+                        <a href="{{ route('factura.pdf', $order->id) }}" class="btn btn-primary btn-sm">Descargar Factura</a>
 
                         </form>
                         

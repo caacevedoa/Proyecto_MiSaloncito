@@ -8,6 +8,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\OrderDetailController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\MetricController;
+use App\Http\Controllers\ReceiptController;
 
 // Ruta para la raíz del sitio
 Route::get('/', function () {
@@ -23,6 +24,14 @@ Route::resource('ordersdetail', OrderDetailController::class);
 Route::resource('payments', PaymentController::class);
 Route::resource('metrics', MetricController::class);
 Route::get('payments_order/{id}', [PaymentController::class, 'pay'])->name('payments_order.pay');
+Route::patch('/tables/{id}/estado/{estado}', [TableController::class, 'cambiarEstado'])
+    ->name('tables.cambiarEstado');
+Route::get('/factura/{id}', [PaymentController::class, 'invoice'])->name('payments.invoice');
+
+
+Route::get('/factura/{id}/pdf', [ReceiptController::class, 'descargarFactura'])
+    ->name('factura.pdf');
+
 
 Auth::routes();
 
