@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\OrderDetail;
 use Illuminate\Http\Request;
 
 class PaymentController extends Controller
@@ -85,5 +86,19 @@ class PaymentController extends Controller
         $payment = Payment::findOrFail($id);
         $payment->delete();
         return redirect()->route('payments.index')->with('success', 'Pago eliminado exitosamente.');
+    }
+
+    public function pay($id)
+    {
+        $order_detail = OrderDetail::where('order_id', $id)->get();
+        $total = 0;
+        foreach ($order_detail as $detail) {
+            $total += $detail->subtotal;
+
+        }
+        $payments = Payment::all();
+        $orders = Order::all();
+        return view('payments_crud.ver_crear_pagos', compact('id', 'total', 'payments', 'orders'));
+
     }
 }

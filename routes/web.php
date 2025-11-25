@@ -22,6 +22,7 @@ Route::resource('orders', OrderController::class);
 Route::resource('ordersdetail', OrderDetailController::class);
 Route::resource('payments', PaymentController::class);
 Route::resource('metrics', MetricController::class);
+Route::get('payments_order/{id}', [PaymentController::class, 'pay'])->name('payments_order.pay');
 
 Auth::routes();
 

@@ -50,6 +50,7 @@
                 <th>Usuario</th>
                 <th>Mesa</th>
                 <th>Estado</th>
+                <th>Total</th>
                 <th>Acciones</th>
             </tr>
         </thead>
@@ -70,7 +71,11 @@
                             @csrf
                             @method('DELETE')
                             <button type="submit">Eliminar</button>
+
+                        <a href="{{ route('payments_order.pay', $order->id) }}">Pagar</a>
+
                         </form>
+                        
                     </td>
                 </tr>
             @endforeach

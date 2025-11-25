@@ -31,7 +31,7 @@
         </select><br>
 
         <label for="total_pay">Total pagado:</label>
-        <input type="number" name="total_pay" id="total_pay" step="100"><br>
+        <input type="number" name="total_pay" id="total_pay" step="100" value="{{$total}}" readonly><br>
 
         <label for="payment_status">Seleccione el estado del pago:</label>
         <select name="payment_status" id="payment_status">
