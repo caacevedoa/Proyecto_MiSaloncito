@@ -96,9 +96,38 @@ class MetricController extends Controller
      */
     public function index()
     {
-        $metrics = Metric::with(['payment', 'user', 'order'])->get();
-        // Ya no necesitamos $payments, $users, $orders aquí si el formulario solo pide la fecha
-        return view('metrics_crud.ver_crear_metricas', compact('metrics'));
+        // --- 1. MÉTRICAS DIARIAS (CRUD original) ---
+        $metrics = Metric::orderBy('record_date', 'desc')->get();
+        
+        // --- 2. MÉTRICAS SEMANALES ---
+        $weeklyMetrics = DB::table('metrics')
+            ->select(
+                DB::raw('WEEKOFYEAR(record_date) as period'),
+                DB::raw('YEAR(record_date) as year'),
+                DB::raw('SUM(total_sales_date) as total_weekly_sales'),
+                DB::raw('SUM(total_orders) as total_weekly_orders'),
+            )
+            ->groupBy('year', 'period')
+            ->orderBy('year', 'desc')
+            ->orderBy('period', 'desc')
+            ->get();
+
+        // --- 3. MÉTRICAS MENSUALES ---
+        $monthlyMetrics = DB::table('metrics')
+            ->select(
+                DB::raw('MONTH(record_date) as month_num'),
+                DB::raw('MONTHNAME(record_date) as period'),
+                DB::raw('YEAR(record_date) as year'),
+                DB::raw('SUM(total_sales_date) as total_monthly_sales'),
+                DB::raw('SUM(total_orders) as total_monthly_orders'),
+            )
+            ->groupBy('year', 'month_num', 'period')
+            ->orderBy('year', 'desc')
+            ->orderBy('month_num', 'desc')
+            ->get();
+
+        // Pasar todas las colecciones a la misma vista
+        return view('metrics_crud.ver_crear_metricas', compact('metrics', 'weeklyMetrics', 'monthlyMetrics'));
     }
 
     /**
@@ -141,4 +170,5 @@ class MetricController extends Controller
         Metric::destroy($id);
         return redirect()->route('metrics.index')->with('success', 'Métrica eliminada');
     }
+   
 }

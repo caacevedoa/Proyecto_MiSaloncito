@@ -16,7 +16,7 @@
         </div>
     @endif
 
-    <h1>Generar Métrica</h1>
+    <h1>Generar Métrica Diaria</h1>
 
     <form action="{{ route('metrics.store') }}" method="post">
         @csrf
@@ -26,8 +26,9 @@
         <button type="submit">Generar Métrica</button>
     </form>
 
-
-    <h1>Listado de Métricas</h1>
+    <hr>
+    
+    <h1 style="color: #007bff;">📊 Listado de Métricas Diarias</h1>
 
     <table border="1">
         <thead>
@@ -70,6 +71,56 @@
                             <button type="submit">Eliminar</button>
                         </form>
                     </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+
+    <hr style="margin: 40px 0;">
+
+    <h1 style="color: #28a745;">📅 Listado de Métricas Semanales</h1>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Año</th>
+                <th>Semana #</th>
+                <th>Ventas Totales</th>
+                <th>Órdenes Totales</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($weeklyMetrics as $metric)
+                <tr>
+                    <td>{{ $metric->year }}</td>
+                    <td>{{ $metric->period }}</td>
+                    <td>${{ number_format($metric->total_weekly_sales, 2) }}</td>
+                    <td>{{ $metric->total_weekly_orders }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+    
+    <hr style="margin: 40px 0;">
+
+    <h1 style="color: #6f42c1;">🗓️ Listado de Métricas Mensuales</h1>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Año</th>
+                <th>Mes</th>
+                <th>Ventas Totales</th>
+                <th>Órdenes Totales</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach ($monthlyMetrics as $metric)
+                <tr>
+                    <td>{{ $metric->year }}</td>
+                    <td>{{ $metric->period }}</td>
+                    <td>${{ number_format($metric->total_monthly_sales, 2) }}</td>
+                    <td>{{ $metric->total_monthly_orders }}</td>
                 </tr>
             @endforeach
         </tbody>

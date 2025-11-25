@@ -31,4 +31,11 @@ Auth::routes();
 Route::post('metrics/{metric}/update-data', 
     [App\Http\Controllers\MetricController::class, 'updateMetric'])
     ->name('metrics.update_data');
+Route::get('metrics/weekly', 
+    [App\Http\Controllers\MetricController::class, 'weekly'])
+    ->name('metrics.weekly');
+Route::get('metrics/monthly', 
+    [App\Http\Controllers\MetricController::class, 'monthly'])
+    ->name('metrics.monthly');
+    
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
