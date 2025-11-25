@@ -1,19 +1,36 @@
-<div class="dropdown mb-4">
-    <button class="btn btn-outline-primary dropdown-toggle" 
-            type="button" 
-            data-bs-toggle="dropdown" 
-            aria-expanded="false">
-        Navegar
-    </button>
+<style>
+    .menu-select {
+        background-color: #2c3e50 !important; /* Igual que la barra */
+        color: white !important;
+        border: 1px solid #2c3e50;
+        border-radius: 6px;
+        padding: 6px 10px;
+        font-weight: 600;
+        cursor: pointer;
+    }
 
-    <ul class="dropdown-menu">
+    .menu-select option {
+        background-color: white;
+        color: black;
+    }
 
-        <li><a class="dropdown-item" href="{{ route('orders.index') }}">Órdenes</a></li>
-        <li><a class="dropdown-item" href="{{ route('tables.index') }}">Mesas</a></li>
-        <li><a class="dropdown-item" href="{{ route('products.index') }}">Productos</a></li>
-        <li><a class="dropdown-item" href="{{ route('users.index') }}">Usuarios</a></li>
-        <li><a class="dropdown-item" href="{{ route('payments.index') }}">Pagos</a></li>
-        <li><a class="dropdown-item" href="{{ route('metrics.index') }}">Métricas</a></li>
+    /* Quitar borde azul feo en focus */
+    .menu-select:focus {
+        box-shadow: 0 0 0 2px rgba(255,255,255,0.3);
+        outline: none;
+    }
+</style>
 
-    </ul>
-</div>
+<select class="menu-select"
+        onchange="if (this.value) window.location.href = this.value;">
+
+    <option value="">Navegar</option>
+    <option value="{{ route('tables.index') }}">Mesas</option>
+    <option value="{{ route('products.index') }}">Productos</option>
+    <option value="{{ route('orders.index') }}">Órdenes</option>
+    <option value="{{ route('ordersdetail.index') }}">Detalles</option>
+    <option value="{{ route('payments.index') }}">Pagos</option>
+    <option value="{{ route('users.index') }}">Usuarios</option>
+    <option value="{{ route('metrics.index') }}">Métricas</option>
+
+</select>
