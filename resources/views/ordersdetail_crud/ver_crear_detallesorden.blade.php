@@ -37,50 +37,73 @@
     </form>
 
 
-    {{-- ========================================================= --}}
-    {{-- 👇 TABLA AJUSTADA A LOS DETALLES DE ORDEN --}}
-    {{-- ========================================================= --}}
-
     <h1>Listado de Detalles de Orden</h1>
 
-    <table border="1">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Orden</th>
-                <th>Producto</th>
-                <th>Cantidad</th>
-                <th>Precio Unitario</th>
-                <th>Subtotal</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
+    @php
+        $groupedDetails = $details->groupBy('order_id');
+    @endphp
 
-        <tbody>
-            @foreach ($details as $detail)
-                <tr>
-                    <td>{{ $detail->id }}</td>
-                    <td>Orden {{ $detail->order->id }}</td>
-                    <td>{{ $detail->product->product_name }}</td>
-                    <td>{{ $detail->quantity }}</td>
-                    <td>{{ $detail->unit_price }}</td>
-                    <td>{{ $detail->subtotal }}</td>
+    @foreach ($groupedDetails as $orderId => $orderDetails)
+        <h2 style="margin-top: 30px; border-bottom: 2px solid #ccc; padding-bottom: 5px;">
+            🛒 Detalles de la Orden #{{ $orderId }}
+            (Mesa: {{ $orderDetails->first()->order->table->table_number ?? 'N/A' }})
+        </h2>
 
-                    <td>
-                        <a href="{{ route('ordersdetail.edit', $detail->id) }}">Editar</a>
-
-                        <form action="{{ route('ordersdetail.destroy', $detail->id) }}" 
-                              method="POST" 
-                              style="display:inline;">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit">Eliminar</button>
-                        </form>
-                    </td>
+        <table border="1" width="100%">
+            <thead>
+                <tr style="background-color: #f0f0f0;">
+                    <th>ID Detalle</th>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Subtotal</th>
+                    <th>Acciones</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
+            </thead>
+
+            <tbody>
+                @php
+                    $orderTotal = 0;
+                @endphp
+                
+                @foreach ($orderDetails as $detail)
+                    @php
+                        // Sumamos el subtotal para calcular el total de la orden
+                        $orderTotal += ($detail->subtotal); 
+                    @endphp
+                    <tr>
+                        <td>{{ $detail->id }}</td>
+                        <td>{{ $detail->product->product_name }}</td>
+                        <td>{{ $detail->quantity }}</td>
+                        <td>${{ number_format($detail->unit_price, 2) }}</td>
+                        <td>${{ number_format($detail->subtotal, 2) }}</td>
+
+                        <td>
+                            <a href="{{ route('ordersdetail.edit', $detail->id) }}">Editar</a>
+
+                            <form action="{{ route('ordersdetail.destroy', $detail->id) }}" 
+                                    method="POST" 
+                                    style="display:inline;">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                @endforeach
+                
+                <tr style="font-weight: bold; background-color: #e0e0e0;">
+                    <td colspan="4" style="text-align: right; padding-right: 10px;">TOTAL ORDEN #{{ $orderId }}:</td>
+                    <td>${{ number_format($orderTotal, 2) }}</td>
+                    <td></td> {{-- Celda vacía para acciones --}}
+                </tr>
+            </tbody>
+        </table>
+    @endforeach
+
+    @if ($groupedDetails->isEmpty())
+        <p>No hay detalles de órdenes registrados.</p>
+    @endif
 
 </body>
 </html>

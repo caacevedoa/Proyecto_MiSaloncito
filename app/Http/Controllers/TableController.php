@@ -58,11 +58,20 @@ class TableController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $table = Table::findOrFail($id);
-        $table->table_number = $request->table_number;
-        $table->table_status = $request->table_status;
-        $table->save();
-        return redirect()->route('tables.index')->with('success', 'Mesa actualizada exitosamente.');
+    // 1. Encontrar la mesa
+    $table = Table::findOrFail($id);
+
+    // 2. Validar (table_number a veces es unique, cuidado aquí)
+    $request->validate([
+        'table_number' => 'required', // O ajusta tus reglas
+        'table_status' => 'required|in:libre,ocupada,reservada',
+    ]);
+
+    // 3. Actualizar
+    $table->update($request->all());
+
+    // 4. RETORNAR AL INDEX (Importante)
+    return redirect()->route('tables.index')->with('success', 'Estado de la mesa actualizado correctamente');
     }
 
     /**

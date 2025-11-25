@@ -30,7 +30,30 @@ class Order extends Model
     }
 
     public function details()
-    {
+{
+    // Relación con los detalles de la orden
     return $this->hasMany(OrderDetail::class, 'order_id');
-    }
+}
+
+/**
+ * Calcula el total de la orden usando (cantidad * precio_unitario) y lo guarda en la base de datos.
+ */
+public function calculateTotal()
+{
+    // Carga la relación 'details' si no está cargada
+    $this->loadMissing('details'); 
+
+    // Calcula el total iterando sobre los detalles
+    // Función de callback (Closure) que realiza: Quantity * Unit_Price
+    $newTotal = $this->details->sum(function ($detail) {
+        // Asegúrate de que 'unit_price' y 'quantity' existan en el modelo OrderDetail
+        return $detail->quantity * $detail->unit_price; 
+    });
+
+    // Actualiza la columna 'total' y guarda
+    $this->total = $newTotal;
+    $this->save(); 
+    
+    return $newTotal;
+}
 }

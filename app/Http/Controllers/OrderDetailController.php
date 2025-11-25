@@ -12,12 +12,18 @@ class OrderDetailController extends Controller
     /**
      * Display a listing of the resource + create form.
      */
-    public function index()
+        public function index()
     {
-        $details = OrderDetail::with('order', 'product')->get();
+        // 1. Obtener los detalles y precargar las relaciones (para evitar N+1)
+        $details = OrderDetail::with(['order.table', 'product'])
+                            ->orderBy('order_id', 'desc') // <-- APLICAMOS ORDEN DESCENDENTE POR order_id
+                            ->get();
+        
+        // 2. Obtener las órdenes y productos para el formulario de creación
         $orders = Order::all();
         $products = Product::all();
-
+        
+        // 3. Pasar a la vista
         return view('ordersdetail_crud.ver_crear_detallesorden', compact('details', 'orders', 'products'));
     }
 
@@ -25,7 +31,7 @@ class OrderDetailController extends Controller
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
-    {
+{
     // Validación
     $request->validate([
         'order_id' => 'required|exists:orders,id',
@@ -33,10 +39,10 @@ class OrderDetailController extends Controller
         'quantity' => 'required|integer|min:1',
     ]);
 
-    // Obtener producto
+    // 1. Obtener producto (para precio)
     $product = Product::find($request->product_id);
 
-    // Crear detalle
+    // 2. Crear detalle (cálculo del subtotal)
     $orderDetail = new OrderDetail();
     $orderDetail->order_id = $request->order_id;
     $orderDetail->product_id = $product->id;
@@ -45,11 +51,16 @@ class OrderDetailController extends Controller
     $orderDetail->subtotal = $product->unit_price * $request->quantity;
 
     $orderDetail->save();
-
-    return redirect()->route('ordersdetail.index', $request->order_id)
-                     ->with('success', 'Producto agregado correctamente');
-    }   
-
+    
+    // 3. RECÁLCULO DEL TOTAL DE LA ORDEN (LA CORRECCIÓN) 🔑
+    $order = Order::find($request->order_id);
+    $order->calculateTotal();
+    
+    // 4. Redireccionar
+    // La ruta ordersdetail.index probablemente necesita el ID de la orden para saber qué detalles mostrar
+    return redirect()->route('ordersdetail.index', $request->order_id) 
+                     ->with('success', 'Producto agregado y total actualizado correctamente');
+}
 
 
     /**

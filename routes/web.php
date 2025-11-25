@@ -23,7 +23,12 @@ Route::resource('ordersdetail', OrderDetailController::class);
 Route::resource('payments', PaymentController::class);
 Route::resource('metrics', MetricController::class);
 Route::get('payments_order/{id}', [PaymentController::class, 'pay'])->name('payments_order.pay');
+Route::post('orders/{order}/recalculate', 
+    [App\Http\Controllers\OrderController::class, 'recalculate'])
+    ->name('orders.recalculate');;
 
 Auth::routes();
-
+Route::post('metrics/{metric}/update-data', 
+    [App\Http\Controllers\MetricController::class, 'updateMetric'])
+    ->name('metrics.update_data');
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
