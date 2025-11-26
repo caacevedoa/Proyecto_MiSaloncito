@@ -120,6 +120,11 @@ class OrderDetailController extends Controller
     }
 
 
+
+
+    /**
+     * Remove the specified resource from storage.
+     */
     public function destroy(string $id)
     {
         $detail = OrderDetail::findOrFail($id);
