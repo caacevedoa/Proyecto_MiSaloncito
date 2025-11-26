@@ -67,6 +67,7 @@
     </div>
 
     <div class="menu-container">
+        <a class="menu-card" href="{{ route('waiter.mode') }}">Modo Mesero</a>
         <a class="menu-card" href="{{ route('tables.index') }}">Mesas</a>
         <a class="menu-card" href="{{ route('products.index') }}">Productos</a>
         <a class="menu-card" href="{{ route('orders.index') }}">Órdenes</a>

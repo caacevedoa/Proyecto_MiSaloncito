@@ -9,6 +9,7 @@ use App\Http\Controllers\OrderDetailController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\MetricController;
 use App\Http\Controllers\ReceiptController;
+use App\Http\Controllers\WaiterController;
 
 // Ruta para la raíz del sitio
 Route::get('/', function () {
@@ -41,3 +42,14 @@ Route::post('metrics/{metric}/update-data',
     [App\Http\Controllers\MetricController::class, 'updateMetric'])
     ->name('metrics.update_data');
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+
+
+// Modo Mesero
+Route::get('/waiter', [WaiterController::class, 'mode'])->name('waiter.mode');
+Route::get('/waiter/order/{table_id}', [WaiterController::class, 'startOrder'])->name('waiter.order');
+Route::post('/waiter/order/{order_id}/add', [WaiterController::class, 'addProduct'])->name('waiter.addProduct');
+Route::get('/waiter/order/{id}/status/{status}', [WaiterController::class, 'changeStatus'])->name('waiter.changeStatus');
+Route::post('/detail/{detail}/quantity', [WaiterController::class, 'updateQuantity'])->name('waiter.updateQuantity');
+Route::post('/detail/{detail}/comment', [WaiterController::class, 'updateComment'])->name('waiter.updateComment');
+Route::delete('/detail/{detail}/delete', [WaiterController::class, 'deleteDetail'])->name('waiter.deleteDetail');
+Route::get('/order/{order}/pay', [WaiterController::class, 'goPay'])->name('waiter.goPay');

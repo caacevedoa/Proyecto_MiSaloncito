@@ -43,7 +43,7 @@ class Order extends Model
     }
 
     // Relación con pago (1 a 1)
-    public function payments()
+    public function payment()
     {
         return $this->hasOne(\App\Models\Payment::class, 'order_id');
     }
@@ -68,4 +68,5 @@ class Order extends Model
 
         return $newTotal;
     }
+    protected $dates = ['order_datetime'];
 }
