@@ -9,10 +9,14 @@ use App\Models\Product;
 use Illuminate\Http\Request;
 
 class WaiterController extends Controller
+    
 {
     public function mode()
     {
-        $tables = Table::all();
+        $tables = Table::with(['orders' => function($q){
+            $q->where('status', 'pendiente');
+        }])->get();
+
         return view('waiter.select_table', compact('tables'));
     }
 
@@ -20,8 +24,8 @@ class WaiterController extends Controller
     {
         // Si ya hay una orden abierta, reutilizarla
         $order = Order::where('table_id', $table_id)
-                      ->where('status', 'pendiente')
-                      ->first();
+                    ->where('status', 'pendiente')
+                    ->first();
 
         if (!$order) {
             $order = Order::create([
@@ -32,17 +36,45 @@ class WaiterController extends Controller
             ]);
         }
 
-        $products = Product::all();
-        $details = OrderDetail::where('order_id', $order->id)->get();
+        // AGRUPAR productos por categoría (product_type)
+        $productsByType = Product::where('product_status', 'activo')
+                                ->orderBy('product_type')
+                                ->orderBy('product_name')
+                                ->get()
+                                ->groupBy('product_type');
 
-        return view('waiter.manage_order', compact('order', 'products', 'details'));
+        // detalles del pedido
+        $details = OrderDetail::where('order_id', $order->id)->get();
+        $total = $details->sum('subtotal');
+
+
+        return view('waiter.manage_order', compact('order', 'details', 'productsByType', 'total'));
     }
 
-    public function changeStatus($id, $status)
+    public function changeStatus($table_id, $nuevoEstado)
     {
-        $order = Order::find($id);
-        $order->status = $status;
-        $order->save();
+        $table = Table::findOrFail($table_id);
+
+        // Cambiar estado de la mesa
+        $table->table_status = $nuevoEstado;
+        $table->save();
+
+        // Si hay una orden abierta, actualizarla
+        $order = Order::where('table_id', $table_id)
+                    ->where('status', 'pendiente')
+                    ->first();
+
+        if ($order) {
+            if ($nuevoEstado === 'libre') {
+                // Si la mesa queda libre, cerrar la orden
+                $order->status = 'entregado';
+            } else {
+                // Si la mesa vuelve a ocuparse
+                $order->status = 'pendiente';
+            }
+
+            $order->save();
+        }
 
         return redirect()->back();
     }
@@ -99,19 +131,25 @@ class WaiterController extends Controller
         return redirect()->back();
     }
 
-    public function goToPayment($order_id)
+    public function completeOrder($order_id)
     {
-        return redirect()->route('payments_order.pay', $order_id);
+        $order = Order::findOrFail($order_id);
+
+        // Cambiar estado
+        $order->status = 'entregado';
+        $order->save();
+
+        // Vaciar los productos de la orden
+        OrderDetail::where('order_id', $order_id)->delete();
+
+        // Cambiar estado de la mesa
+        $order->table->table_status = 'libre';
+        $order->table->save();
+
+        return redirect()->route('waiter.mode')->with('success', 'Pago completado');
     }
 
-    public function changeTableStatus($table_id, $status)
-    {
-        $table = Table::findOrFail($table_id);
-        $table->status = $status;
-        $table->save();
-
-        return redirect()->back();
-    }
 
     
+
 }

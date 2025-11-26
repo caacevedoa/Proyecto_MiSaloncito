@@ -41,10 +41,11 @@
 
 <div class="d-flex flex-wrap gap-3">
 
-@foreach($tables as $t)
+    @foreach($tables as $t)
 
-    {{-- Buscar orden abierta --}}
-    @php
+        {{-- Buscar orden abierta --}}
+        @php
+        // Buscar si hay una orden PENDIENTE (la única que debe mostrarse)
         $order = \App\Models\Order::where('table_id', $t->id)
             ->where('status', 'pendiente')
             ->first();
@@ -55,12 +56,23 @@
 
         $total = $details->sum('subtotal');
 
-        // CORRECCIÓN: parsear order_datetime a Carbon
-        $tiempo = $order ? \Carbon\Carbon::parse($order->order_datetime)->diffForHumans() : null;
+                // ACTUALIZAR ESTADO AUTOMÁTICAMENTE SEGÚN PRODUCTOS
+        if ($order && $details->count() > 0) {
+            if ($t->table_status !== 'ocupada') {
+                $t->table_status = 'ocupada';
+                $t->save();
+            }
+        } else {
+            if ($t->table_status !== 'libre') {
+                $t->table_status = 'libre';
+                $t->save();
+            }
+        }
 
-        switch($t->status) {
+        // Asignar clase visual
+        switch($t->table_status) {
             case 'ocupada':  $class = 'estado-ocupada'; break;
-            case 'reservada':   $class = 'estado-reservada'; break;
+            case 'reservada': $class = 'estado-pedido'; break;
             default:         $class = 'estado-libre'; break;
         }
     @endphp
@@ -87,20 +99,17 @@
                         <div class="mt-1 fw-bold">
                             Total: ${{ number_format($total, 0) }}
                         </div>
+
+                    </div>
+                    <div  class="mt-1 fw-bold">
+                         <a href="{{ route('payments_order.pay', $order->id) }}" class="btn btn-success">
+                            Pagar</a>
                     </div>
                 @endif
             </div>
+            
         </a>
 
-        {{-- BOTONES DE ESTADO --}}
-        <div class="estado-btns mt-2">
-            <a href="{{ route('tables.cambiarEstado', [$t->id, 'libre']) }}"
-               class="btn btn-success btn-sm">Libre</a>
-            <a href="{{ route('tables.cambiarEstado', [$t->id, 'ocupada']) }}"
-               class="btn btn-warning btn-sm">Ocupada</a>
-            <a href="{{ route('tables.cambiarEstado', [$t->id, 'reservada']) }}"
-               class="btn btn-danger btn-sm">Reservada</a>
-        </div>
 
     </div>
 

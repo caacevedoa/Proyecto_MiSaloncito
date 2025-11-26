@@ -13,12 +13,7 @@
         @csrf
 
         <label for="order_id">Seleccione la orden:</label>
-        <select name="order_id" id="order_id">
-            @foreach ($orders as $order)
-                <option value="{{ $order->id }}">{{ $order->id }}</option>
-            @endforeach
-        </select>
-        <br>
+        <input name="order_id" id="order_id" value="{{ $id ?? '' }}" readonly><br>
 
         <label for="payment_method">Seleccione el medio de pago:</label>
         <select name="payment_method" id="payment_method">
@@ -68,8 +63,8 @@
                     <td>{{ $payment->total_pay }}</td>
                     <td>{{ $payment->payment_status }}</td>
                     <td>
-                        <a href="{{ route('payments.invoice', $order->id) }}" class="btn btn-primary btn-sm">Ver Factura</a>
-                        <a href="{{ route('factura.pdf', $order->id) }}" class="btn btn-primary btn-sm">Descargar Factura</a>
+                        <a href="{{ route('payments.invoice', $payment->order_id) }}" class="btn btn-primary btn-sm">Ver Factura</a>
+                        <a href="{{ route('factura.pdf', $payment->order_id) }}" class="btn btn-primary btn-sm">Descargar Factura</a>
                         <a href="{{ route('payments.edit', $payment->id) }}">Editar</a>
                         <form action="{{ route('payments.destroy', $payment->id) }}" method="POST" style="display:inline;">
                             @csrf

@@ -35,10 +35,8 @@
         <table class="table table-bordered table-striped align-middle">
             <thead class="table-dark">
                 <tr>
-                    <th>ID</th>
                     <th>Número de Mesa</th>
                     <th>Estado Actual</th> {{-- ← NUEVA COLUMNA --}}
-                    <th style="width: 35%;">Estado (Cambio Rápido)</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
@@ -46,7 +44,7 @@
             <tbody>
                 @foreach ($tables as $table)
                     <tr>
-                        <td>{{ $table->id }}</td>
+
                         <td>{{ $table->table_number }}</td>
 
                         {{-- ESTADO ACTUAL --}}
@@ -58,31 +56,6 @@
                             @elseif($table->table_status == 'reservada')
                                 <span class="badge bg-info text-dark">Reservada</span>
                             @endif
-                        </td>
-
-                        {{-- BOTONES DE CAMBIO RÁPIDO --}}
-                        <td>
-                            <div class="d-flex gap-2">
-
-                                <form action="{{ route('tables.cambiarEstado', ['id' => $table->id, 'estado' => 'libre']) }}" method="POST">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button class="btn btn-success btn-sm">Libre</button>
-                                </form>
-
-                                <form action="{{ route('tables.cambiarEstado', ['id' => $table->id, 'estado' => 'ocupada']) }}" method="POST">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button class="btn btn-warning btn-sm">Ocupada</button>
-                                </form>
-
-                                <form action="{{ route('tables.cambiarEstado', ['id' => $table->id, 'estado' => 'reservada']) }}" method="POST">
-                                    @csrf
-                                    @method('PATCH')
-                                    <button class="btn btn-info btn-sm">Reservada</button>
-                                </form>
-
-                            </div>
                         </td>
 
                         {{-- ACCIONES --}}
