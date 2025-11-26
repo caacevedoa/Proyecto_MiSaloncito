@@ -110,7 +110,7 @@ class PaymentController extends Controller
     // Calcular total
     $total = $order->orderDetails->sum('subtotal');
 
-    return view('payments_crud.factura', compact('order', 'payment', 'total'));
+    return view('payments_crud.factura', compact('id','order', 'payment', 'total'));
 }
 
 }

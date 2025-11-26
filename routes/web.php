@@ -24,12 +24,9 @@ Route::resource('orders', OrderController::class);
 Route::resource('ordersdetail', OrderDetailController::class);
 Route::resource('payments', PaymentController::class);
 Route::resource('metrics', MetricController::class);
+
 Route::get('payments_order/{id}', [PaymentController::class, 'pay'])->name('payments_order.pay');
-Route::patch('/tables/{id}/estado/{estado}', [TableController::class, 'cambiarEstado'])
-    ->name('tables.cambiarEstado');
 Route::get('/factura/{id}', [PaymentController::class, 'invoice'])->name('payments.invoice');
-
-
 Route::get('/factura/{id}/pdf', [ReceiptController::class, 'descargarFactura'])
     ->name('factura.pdf');
 
@@ -55,8 +52,13 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 Route::get('/waiter', [WaiterController::class, 'mode'])->name('waiter.mode');
 Route::get('/waiter/order/{table_id}', [WaiterController::class, 'startOrder'])->name('waiter.order');
 Route::post('/waiter/order/{order_id}/add', [WaiterController::class, 'addProduct'])->name('waiter.addProduct');
-Route::get('/waiter/order/{id}/status/{status}', [WaiterController::class, 'changeStatus'])->name('waiter.changeStatus');
 Route::post('/detail/{detail}/quantity', [WaiterController::class, 'updateQuantity'])->name('waiter.updateQuantity');
 Route::post('/detail/{detail}/comment', [WaiterController::class, 'updateComment'])->name('waiter.updateComment');
 Route::delete('/detail/{detail}/delete', [WaiterController::class, 'deleteDetail'])->name('waiter.deleteDetail');
-Route::get('/order/{order}/pay', [WaiterController::class, 'goPay'])->name('waiter.goPay');
+Route::get('/waiter/{order}/pay', [WaiterController::class, 'goPay'])->name('ver_crear_pagos');
+Route::patch('/waiter/{id}/estado/{estado}', [WaiterController::class, 'changeStatus'])
+    ->name('waiter.changeStatus');
+Route::post('/orders/{order_id}/complete', [WaiterController::class, 'completeOrder'])->name('waiter.complete');
+
+Route::patch('/tables/{id}/estado/{estado}', [TableController::class, 'cambiarEstado'])
+    ->name('tables.cambiarEstado');

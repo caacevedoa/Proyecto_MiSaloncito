@@ -8,20 +8,38 @@
 </h2>
 
 <h4>Agregar Productos</h4>
-<div class="row">
-    @foreach($products as $p)
-        <div class="col-4 mb-2">
-            <form action="{{ route('waiter.addProduct', $order->id) }}" method="POST" onclick="playSound()">
-                @csrf
-                <input type="hidden" name="product_id" value="{{ $p->id }}">
-                <button class="btn btn-primary w-100">{{ $p->product_name }}</button>
-            </form>
+
+{{-- 🔽 Categorías desplegables --}}
+@foreach($productsByType as $type => $items)
+    <div class="mb-3">
+        <button class="btn btn-dark w-100" type="button" data-bs-toggle="collapse" data-bs-target="#cat-{{ $type }}">
+            {{ $type }}
+        </button>
+
+        <div class="collapse mt-2" id="cat-{{ $type }}">
+            <div class="row">
+                @foreach($items as $p)
+                    <div class="col-6 col-md-4 mb-2">
+                        <form action="{{ route('waiter.addProduct', $order->id) }}" method="POST" onclick="playSound()">
+                            @csrf
+                            <input type="hidden" name="product_id" value="{{ $p->id }}">
+                            <button class="btn btn-primary w-100">
+                                {{ $p->product_name }} <br>
+                                <small>${{ number_format($p->unit_price,0) }}</small>
+                            </button>
+                        </form>
+                    </div>
+                @endforeach
+            </div>
         </div>
-    @endforeach
-</div>
+    </div>
+@endforeach
 
 <hr>
 
+{{-- ========================
+      PEDIDO ACTUAL
+========================= --}}
 <h3>Pedido Actual</h3>
 <table class="table table-bordered">
     <thead>
@@ -58,7 +76,8 @@
 
             <td>
                 <form action="{{ route('waiter.deleteDetail', $d->id) }}" method="POST">
-                    @csrf @method('DELETE')
+                    @csrf 
+                    @method('DELETE')
                     <button class="btn btn-danger btn-sm">✕</button>
                 </form>
             </td>
@@ -66,10 +85,12 @@
         @endforeach
     </tbody>
 </table>
+<h4 class="mt-3">Total: ${{ number_format($total, 0) }}</h4>
+<a href="{{ route('payments_order.pay', $order->id) }}" class="btn btn-success">
+    Pagar
+</a>
 
-<a href="{{ route('waiter.goPay', $order->id) }}" class="btn btn-warning">💳 Ir a Pagar</a>
 <div class="mt-3">
-
     <a href="{{ route('payments.invoice', $order->id) }}" 
        class="btn btn-primary btn-sm" target="_blank">
         🧾 Ver Factura
@@ -79,8 +100,12 @@
        class="btn btn-secondary btn-sm" target="_blank">
         ⬇ Descargar PDF
     </a>
-
+    
+    <form action="{{ route('waiter.complete', $order->id) }}" method="POST"
+        onsubmit="return confirm('¿Estás seguro de completar la orden?')">
+        @csrf
+        <button type="submit" class="btn btn-success">Completar Orden</button>
+    </form>
 </div>
 
 @endsection
-
