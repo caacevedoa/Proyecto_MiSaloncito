@@ -71,12 +71,7 @@
 
                 <div style="font-size:22px;">Mesa {{ $t->table_number }}</div>
 
-                {{-- TIEMPO DE ORDEN --}}
-                @if($order)
-                    <div style="font-size:14px; margin-top:5px;">
-                         {{ $tiempo }}
-                    </div>
-                @endif
+              
 
                 {{-- VISTA PREVIA DEL PEDIDO --}}
                 @if($order)

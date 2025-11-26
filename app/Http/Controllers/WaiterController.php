@@ -112,4 +112,6 @@ class WaiterController extends Controller
 
         return redirect()->back();
     }
+
+    
 }
