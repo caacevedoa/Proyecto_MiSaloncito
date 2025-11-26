@@ -62,7 +62,7 @@ class MetricController extends Controller
     }
 
     /**
-     * Lógica para calcular y guardar métricas diarias en la BD (Usado por store y updateMetric)
+     * Lógica para calcular y guardar métricas diarias en la BD (Usado por store y update)
      */
     private function calculateAndStoreMetrics(string $date, ?Metric $metric = null): Metric
     {
@@ -82,6 +82,8 @@ class MetricController extends Controller
         $stats = $this->getStatsForPeriod($start, $end);
 
         // Resolver IDs foráneos obligatorios (Integridad Referencial)
+        // Usamos first() y añadimos un '?? null' para que si no hay órdenes ese día, los FKs sean NULL
+        $firstOrder = Order::whereDate('order_datetime', $date)->oldest('id')->first();
         $lastOrder = Order::whereDate('order_datetime', $date)->latest('id')->first();
         $lastPayment = $lastOrder ? Payment::where('order_id', $lastOrder->id)->first() : null;
         
@@ -90,13 +92,17 @@ class MetricController extends Controller
             'record_date'             => $date,
             'total_sales_date'        => $totalSales,
             'total_orders'            => $totalOrders,
-            'best_selling_product_id' => $stats['pro_qty_name'], // Guardamos el nombre
-            'most_active_user_id'     => $stats['waiter_name'],  // Guardamos el nombre
+            // NOTA: Cambiamos los nombres de los campos para ser coherentes con el contenido (guarda el nombre)
+            'best_selling_product_name' => $stats['pro_qty_name'], 
+            'most_active_waiter_name'   => $stats['waiter_name'],  
             
-            // FKs (Usamos IDs seguros o valores por defecto si la tabla está vacía)
-            'user_id'  => $ordersToday->first()->user_id ?? User::first()->id ?? 1,
-            'order_id' => $lastOrder->id ?? Order::first()->id ?? 1,
-            'pay_id'   => $lastPayment->id ?? Payment::first()->id ?? 1,
+            // FKs (Usamos IDs seguros o NULL)
+            // user_id puede ser el mesero de la primera orden o null si no hay órdenes
+            'user_id'  => $firstOrder->user_id ?? null,
+            // order_id apunta a la última orden del día o null
+            'order_id' => $lastOrder->id ?? null,
+            // pay_id apunta al último pago del día o null
+            'pay_id'   => $lastPayment->id ?? null,
         ];
         
         if ($metric) {
@@ -107,23 +113,49 @@ class MetricController extends Controller
         }
     }
 
-    public function index()
+    // Acepta un parámetro opcional 'selected_month'
+    public function index(Request $request)
     {
+        // =============================================================
+        // LÓGICA DE SELECCIÓN DE MES (PARA DETALLE MENSUAL)
+        // =============================================================
+        $selectedMonth = $request->input('selected_month');
+        
+        if ($selectedMonth) {
+            try {
+                // Intenta parsear la fecha (formato YYYY-MM)
+                $date = Carbon::createFromFormat('Y-m', $selectedMonth);
+            } catch (\Exception $e) {
+                // Si falla, usa el mes anterior por defecto
+                $date = Carbon::now()->subMonthNoOverflow();
+            }
+        } else {
+            // Por defecto, usa el mes anterior
+            $date = Carbon::now()->subMonthNoOverflow();
+        }
+
+        $lastMonthStart = $date->startOfMonth();
+        $lastMonthEnd = $date->copy()->endOfMonth();
+        // ESTA ES LA VARIABLE QUE DEBE USARSE EN LA VISTA PARA LOS TÍTULOS
+        $lastMonthName = $lastMonthStart->getTranslatedMonthName() . ' ' . $lastMonthStart->year; 
+        
         // =============================================================
         // 1. MÉTRICAS DIARIAS (Enriquecidas con stats al vuelo)
         // =============================================================
         $rawDailyMetrics = Metric::orderBy('record_date', 'desc')->get();
         
         $metrics = $rawDailyMetrics->map(function ($metric) {
+            // NOTA IMPORTANTE: En la base de datos ya deberíamos tener los nombres de los tops,
+            // pero si la métrica fue generada antes de este cambio, o para refrescar, 
+            // podemos recalcular los stats en tiempo de ejecución.
             $start = Carbon::parse($metric->record_date)->startOfDay();
             $end   = Carbon::parse($metric->record_date)->endOfDay();
-            // Recalculamos stats para mostrar datos frescos si se editaron órdenes antiguas
             $metric->stats = $this->getStatsForPeriod($start, $end);
             return $metric;
         });
 
         // =============================================================
-        // 2. MÉTRICAS SEMANALES
+        // 2. MÉTRICAS SEMANALES (Cálculo se mantiene igual)
         // =============================================================
         $weeklyGroups = Order::select(
                 DB::raw('YEAR(order_datetime) as year'),
@@ -158,7 +190,7 @@ class MetricController extends Controller
         }
 
         // =============================================================
-        // 3. MÉTRICAS MENSUALES
+        // 3. MÉTRICAS MENSUALES (RESUMEN) (Cálculo se mantiene igual)
         // =============================================================
         $monthlyGroups = Order::select(
                 DB::raw('YEAR(order_datetime) as year'),
@@ -222,12 +254,60 @@ class MetricController extends Controller
             ->orderByDesc('total_money_sold')
             ->get();
 
+        // =============================================================
+        // 6. ESTADÍSTICAS GLOBALES POR MES SELECCIONADO (Detalle)
+        // =============================================================
+        
+        // Stats Producto por Mes Seleccionado
+        $monthlyProductStats = DB::table('order_details')
+            ->join('products', 'products.id', '=', 'order_details.product_id')
+            ->join('orders', 'orders.id', '=', 'order_details.order_id')
+            ->whereBetween('orders.order_datetime', [$lastMonthStart, $lastMonthEnd])
+            ->where('orders.status', '!=', 'cancelado')
+            ->select(
+                'products.product_name',
+                DB::raw('SUM(order_details.quantity) as total_qty'),
+                DB::raw('SUM(order_details.quantity * order_details.unit_price) as total_money')
+            )
+            ->groupBy('products.product_name')
+            ->orderByDesc('total_money')
+            ->get();
+
+        // Stats Mesero por Mes Seleccionado
+        $monthlyWaiterStats = Order::with('user')
+            ->select(
+                'user_id',
+                DB::raw('COUNT(*) as total_orders_count'),
+                DB::raw('SUM(total) as total_money_sold')
+            )
+            ->whereBetween('order_datetime', [$lastMonthStart, $lastMonthEnd])
+            ->where('status', '!=', 'cancelado')
+            ->groupBy('user_id')
+            ->orderByDesc('total_money_sold')
+            ->get();
+
+        // Obtenemos todos los meses con órdenes para el selector de la vista
+        $availableMonths = Order::select(
+                DB::raw('DATE_FORMAT(order_datetime, "%Y-%m") as month_year'),
+                DB::raw('YEAR(order_datetime) as year'),
+                DB::raw('MONTHNAME(order_datetime) as month_name')
+            )
+            ->distinct()
+            ->orderBy('month_year', 'desc')
+            ->get();
+
+
         return view('metrics_crud.ver_crear_metricas', compact(
             'metrics', 
             'weeklyMetrics', 
             'monthlyMetrics',
             'productStats', 
-            'waiterStats'
+            'waiterStats',
+            'monthlyProductStats', 
+            'monthlyWaiterStats',  
+            'lastMonthName',
+            'selectedMonth', 
+            'availableMonths'
         ));
     }
 
@@ -247,9 +327,13 @@ class MetricController extends Controller
         }
     }
 
-    public function updateMetric(Metric $metric)
+    /**
+     * Usa el método update para la ruta resource.
+     */
+    public function update(Request $request, Metric $metric)
     {
         try {
+            // Reutilizamos la lógica de cálculo y almacenamiento
             $this->calculateAndStoreMetrics($metric->record_date, $metric);
             return redirect()->route('metrics.index')->with('success', 'Reporte actualizado con datos recientes.');
         } catch (\Exception $e) {
