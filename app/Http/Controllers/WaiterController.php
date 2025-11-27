@@ -140,7 +140,7 @@ class WaiterController extends Controller
         $order->save();
 
         // Vaciar los productos de la orden
-        OrderDetail::where('order_id', $order_id)->delete();
+        //OrderDetail::where('order_id', $order_id)->delete();
 
         // Cambiar estado de la mesa
         $order->table->table_status = 'libre';
