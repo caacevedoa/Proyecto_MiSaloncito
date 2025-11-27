@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Órdenes</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .cancel-reason { 
+            background-color: #fcecec; 
+            border-left: 3px solid #dc3545; 
+            padding: 5px; 
+            margin-top: 5px; 
+            font-size: 0.85em; 
+        }
+    </style>
 </head>
 <body>
 
@@ -30,8 +43,9 @@
         <label for="status">Estado de la orden:</label>
         <select name="status" id="status">
             <option value="pendiente">Pendiente</option>
-            <option value="entregado">Entregado</option>
-            <option value="cancelado">Cancelado</option>
+            <option value="entregado">Entregada</option>
+            <option value="cancelado">Cancelada</option>
+            <option value="cerrado">Cerrada</option>
         </select>
         <br>
 
@@ -56,6 +70,7 @@
                 <th>Usuario</th>
                 <th>Mesa</th>
                 <th>Estado</th>
+                <th>Motivo Cancelación</th>  {{-- NUEVA COLUMNA --}}
                 <th>Total</th>
                 <th>Acciones</th>
             </tr>
@@ -68,7 +83,23 @@
                     <td>{{ $order->order_datetime }}</td>
                     <td>{{ $order->user->name }}</td>
                     <td>Mesa #{{ $order->table->table_number }}</td>
-                    <td>{{ $order->status }}</td>
+                    
+                    {{-- Columna de Estado con Resaltado si es Cancelado --}}
+                    <td>
+                        {{ $order->status }}
+                        
+                    </td>
+                    
+                    {{-- NUEVA CELDA: Motivo de Cancelación --}}
+                    <td>
+                        @if ($order->status === 'cancelado' && $order->cancellation_reason)
+                            <div class="cancel-reason">
+                                Motivo:{{ $order->cancellation_reason }}
+                            </div>
+                        @else
+                            N/A
+                        @endif
+                    </td>
 
                     <td>
                         ${{ number_format(
@@ -98,7 +129,7 @@
                             <button type="submit"
                                 style="background-color: #007bff; color: white;
                                        border: none; padding: 5px 8px; cursor: pointer;">
-                                Actualizar Total 🔄
+                                Actualizar Total 
                             </button>
                         </form>
                     </td>

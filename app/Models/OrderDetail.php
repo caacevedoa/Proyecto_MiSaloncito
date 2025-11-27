@@ -19,6 +19,7 @@ class OrderDetail extends Model
         'quantity',
         'unit_price',
         'subtotal',
+        'comment',
     ];
 
     /**

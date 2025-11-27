@@ -31,8 +31,9 @@
         <label for="status">Estado de la orden:</label>
         <select name="status" id="status">
             <option value="pendiente" {{ $order->status == 'pendiente' ? 'selected' : '' }}>Pendiente</option>
-            <option value="entregado" {{ $order->status == 'entregado' ? 'selected' : '' }}>Entregado</option>
-            <option value="cancelado" {{ $order->status == 'cancelado' ? 'selected' : '' }}>Cancelado</option>
+            <option value="entregado" {{ $order->status == 'entregado' ? 'selected' : '' }}>Entregada</option>
+            <option value="cancelado" {{ $order->status == 'cancelado' ? 'selected' : '' }}>Cancelada</option>
+            <option value="cerrado" {{ $order->status == 'cerrado' ? 'selected' : '' }}>Cerrada</option>
         </select>
         <br>
 

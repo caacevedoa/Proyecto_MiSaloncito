@@ -13,8 +13,9 @@ class WaiterController extends Controller
 {
     public function mode()
     {
+        // Buscar órdenes que aún estén activas (pendiente o entregado)
         $tables = Table::with(['orders' => function($q){
-            $q->where('status', 'pendiente');
+            $q->whereIn('status', ['pendiente', 'entregado']);
         }])->get();
 
         return view('waiter.select_table', compact('tables'));
@@ -22,26 +23,34 @@ class WaiterController extends Controller
 
     public function startOrder($table_id)
     {
-        // Si ya hay una orden abierta, reutilizarla
+        // Si ya hay una orden abierta (pendiente O entregado), reutilizarla
         $order = Order::where('table_id', $table_id)
-                    ->where('status', 'pendiente')
-                    ->first();
+                      ->whereIn('status', ['pendiente', 'entregado'])
+                      ->first();
 
         if (!$order) {
+            // Si no hay orden activa, creamos una nueva.
             $order = Order::create([
                 'table_id' => $table_id,
                 'order_datetime' => now(),
                 'status' => 'pendiente',
                 'user_id' => auth()->id()
             ]);
+            
+            // Asegurar que la mesa se marque como ocupada al crear la orden.
+            $table = Table::findOrFail($table_id);
+            if ($table->table_status !== 'ocupada') {
+                $table->table_status = 'ocupada';
+                $table->save();
+            }
         }
 
         // AGRUPAR productos por categoría (product_type)
         $productsByType = Product::where('product_status', 'activo')
-                                ->orderBy('product_type')
-                                ->orderBy('product_name')
-                                ->get()
-                                ->groupBy('product_type');
+                                 ->orderBy('product_type')
+                                 ->orderBy('product_name')
+                                 ->get()
+                                 ->groupBy('product_type');
 
         // detalles del pedido
         $details = OrderDetail::where('order_id', $order->id)->get();
@@ -61,8 +70,8 @@ class WaiterController extends Controller
 
         // Si hay una orden abierta, actualizarla
         $order = Order::where('table_id', $table_id)
-                    ->where('status', 'pendiente')
-                    ->first();
+                        ->where('status', 'pendiente')
+                        ->first();
 
         if ($order) {
             if ($nuevoEstado === 'libre') {
@@ -81,7 +90,18 @@ class WaiterController extends Controller
 
     public function addProduct(Request $request, $order_id)
     {
+        $order = Order::findOrFail($order_id); // Obtener la orden primero
         $product = Product::findOrFail($request->product_id);
+
+        $reopened = false;
+        // ************** LÓGICA DE REAPERTURA **************
+        if ($order->status === 'entregado') {
+            $order->status = 'pendiente';
+            $order->save();
+            $reopened = true; // Bandera para saber que fue reabierta
+        }
+        // **************************************************
+
 
         // Buscar si ya existe en el pedido
         $detail = OrderDetail::where('order_id', $order_id)
@@ -103,12 +123,27 @@ class WaiterController extends Controller
             ]);
         }
 
+        // --- ENVIAR NOTIFICACIÓN AL MESERO ---
+        if ($reopened) {
+            return redirect()->back()->with('info', 
+                '✅ Producto agregado. ATENCIÓN: La orden fue REABIÉRTA (cambiada a PENDIENTE) para incluir "' . $product->product_name . '". La cocina debe ser notificada sobre esta adición.'
+            );
+        }
+
         return redirect()->back();
     }
 
     public function updateQuantity(Request $request, $detail_id)
     {
         $detail = OrderDetail::findOrFail($detail_id);
+        
+        // Evitar cantidades negativas o cero
+        if ($request->quantity <= 0) {
+            // Si la cantidad es cero o menos, se elimina el detalle
+            $this->deleteDetail($detail_id);
+            return redirect()->back();
+        }
+
         $detail->quantity = $request->quantity;
         $detail->subtotal = $detail->quantity * $detail->unit_price;
         $detail->save();
@@ -127,7 +162,8 @@ class WaiterController extends Controller
         $detail = OrderDetail::findOrFail($detail_id);
         $detail->comment = $request->comment;
         $detail->save();
-
+        
+        // Redirige sin un mensaje de éxito para una experiencia fluida de "guardado automático"
         return redirect()->back();
     }
 
@@ -135,21 +171,33 @@ class WaiterController extends Controller
     {
         $order = Order::findOrFail($order_id);
 
-        // Cambiar estado
-        $order->status = 'entregado';
+        $order->status = 'cerrado'; 
         $order->save();
 
-        // Vaciar los productos de la orden
-        //OrderDetail::where('order_id', $order_id)->delete();
-
-        // Cambiar estado de la mesa
         $order->table->table_status = 'libre';
         $order->table->save();
 
-        return redirect()->route('waiter.mode')->with('success', 'Pago completado');
+        return redirect()->route('waiter.mode')->with('success', 'Orden #' . $order->id . ' cerrada y mesa liberada.');
     }
 
+    public function cancelOrder(Request $request, $order_id)
+    {
+        $order = Order::findOrFail($order_id);
+        
+        $order->status = 'cancelado'; 
+        
+        if ($request->filled('reason')) {
+            $order->cancellation_reason = $request->reason; 
+        } else {
+            $order->cancellation_reason = null; 
+        }
+        
+        $order->save();
 
-    
+        $order->table->table_status = 'libre';
+        $order->table->save();
 
+        return redirect()->route('waiter.mode')->with('success', 
+            'Orden #' . $order->id . ' ha sido cancelada exitosamente y la mesa liberada.');
+    }
 }

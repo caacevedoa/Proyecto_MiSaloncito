@@ -17,6 +17,7 @@ class Order extends Model
         'table_id',
         'table_status',
         'total',
+        'cancellation_reason',
     ];
 
     // Relación con el usuario

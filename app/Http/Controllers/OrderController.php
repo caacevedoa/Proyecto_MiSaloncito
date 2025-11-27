@@ -92,4 +92,29 @@ class OrderController extends Controller
         return redirect()->back()->with('success', 
             'Total de la Orden #' . $order->id . ' actualizado correctamente.');
     }
+
+    public function kitchenIndex()
+{
+    // Solo cargamos las órdenes que estén en estado 'pendiente'.
+    $pendingOrders = Order::with(['user', 'table', 'details.product'])
+                            ->where('status', 'pendiente') 
+                            ->orderBy('order_datetime', 'asc') // Ordenamos por las más antiguas
+                            ->get();
+
+    // La vista se llamará 'kitchen.index'
+    return view('kitchen.index', compact('pendingOrders'));
+}
+
+public function completeOrder(string $id)
+{
+    $order = Order::findOrFail($id);
+    
+    // Cambiamos el estado a 'entregado' según tu modelo de estados
+    $order->status = 'entregado'; 
+    $order->save();
+
+    return redirect()->route('kitchen.index')->with('success', 
+        'Orden #' . $order->id . ' marcada como lista para entregar.');
+}
+
 }

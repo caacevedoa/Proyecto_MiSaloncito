@@ -9,7 +9,7 @@ use App\Http\Controllers\OrderDetailController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\MetricController;
 use App\Http\Controllers\ReceiptController;
-use App\Http\Controllers\WaiterController;
+use App\Http\Controllers\WaiterController; // ¡Asegúrate de que este esté aquí!
 
 // Ruta para la raíz del sitio
 Route::get('/', function () {
@@ -47,9 +47,29 @@ Route::get('metrics/monthly',
     
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
+// Rutas Específicas para el Área de Cocina
+Route::prefix('kitchen')->group(function () {
+    // Muestra todas las órdenes pendientes para cocinar
+    Route::get('/', [OrderController::class, 'kitchenIndex'])
+        ->name('kitchen.index');
+    
+    // Marca una orden como completada/lista (estado: entregado)
+    Route::patch('/{id}/complete', [OrderController::class, 'completeOrder'])
+        ->name('kitchen.complete');
+    
+    // CIERRE TOTAL desde cocina (estado: cerrado)
+    Route::patch('/{id}/close', [OrderController::class, 'closeOrder'])
+        ->name('kitchen.close');
+});
+
 
 // Modo Mesero
 Route::get('/waiter', [WaiterController::class, 'mode'])->name('waiter.mode');
+
+// NUEVA RUTA: Endpoint JSON para Polling
+Route::get('/waiter/status-json', [WaiterController::class, 'getTablesStatusJson'])
+    ->name('waiter.status-json'); // <-- ¡NUEVA RUTA CLAVE!
+
 Route::get('/waiter/order/{table_id}', [WaiterController::class, 'startOrder'])->name('waiter.order');
 Route::post('/waiter/order/{order_id}/add', [WaiterController::class, 'addProduct'])->name('waiter.addProduct');
 Route::post('/detail/{detail}/quantity', [WaiterController::class, 'updateQuantity'])->name('waiter.updateQuantity');
@@ -59,6 +79,9 @@ Route::get('/waiter/{order}/pay', [WaiterController::class, 'goPay'])->name('ver
 Route::patch('/waiter/{id}/estado/{estado}', [WaiterController::class, 'changeStatus'])
     ->name('waiter.changeStatus');
 Route::post('/orders/{order_id}/complete', [WaiterController::class, 'completeOrder'])->name('waiter.complete');
+// NUEVA RUTA: Para la cancelación de la orden
+Route::patch('/waiter/order/{order_id}/cancel', [WaiterController::class, 'cancelOrder'])
+    ->name('waiter.cancelOrder');
 
 Route::patch('/tables/{id}/estado/{estado}', [TableController::class, 'cambiarEstado'])
     ->name('tables.cambiarEstado');
