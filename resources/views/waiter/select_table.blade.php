@@ -106,6 +106,34 @@
 <div class="salon-wrapper">
 
     <h1 class="mb-3">Vista del Salón</h1>
+<div style="
+    background: #f8f9fa;
+    padding: 12px 18px;
+    border-radius: 8px;
+    width: fit-content;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+">
+    <strong>Estado de mesas:</strong>
+    <div style="display: flex; gap: 15px; margin-top: 8px;">
+
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 16px; height: 16px; background: #0b9e49; border-radius: 3px;"></div>
+            <span>Libre</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 16px; height: 16px; background: #e6a100; border-radius: 3px;"></div>
+            <span>Ocupada</span>
+        </div>
+
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 16px; height: 16px; background: #3b7bdc; border-radius: 3px;"></div>
+            <span>Consumo entregado</span>
+        </div>
+
+    </div>
+</div>
 
 <div class="d-flex flex-wrap gap-3">
 
@@ -170,6 +198,31 @@
                             Total: ${{ number_format($total, 0) }}
                         </div>
 
+                        @php
+                        // Solo mostrar mensaje si la orden tiene productos
+                        $tieneProductos = $details->count() > 0;
+
+                        $totalPagado = 0;
+
+                        if ($tieneProductos) {
+                            $totalPagado = \Illuminate\Support\Facades\DB::table('payments')
+                                ->where('order_id', $order->id)
+                                ->sum('total_pay');
+                        }
+                    @endphp
+
+                    @if($tieneProductos)
+                        @if($totalPagado >= $total && $total > 0)
+                            <div style="font-size:11px; color:#0b8f43; margin-top:3px;">
+                                ✔ Pagada
+                            </div>
+                        @else
+                            <div style="font-size:11px; color:#c0392b; margin-top:3px;">
+                                ✘ Pendiente de pago
+                            </div>
+                        @endif
+                    @endif
+
                     </div>
 
                 @else
@@ -186,10 +239,11 @@
         @if($order)
             <div class="action-button-container" data-action-buttons-id="{{ $t->id }}">
 
-                <a href="{{ route('payments_order.pay', $order->id) }}"
-                   class="btn btn-dark-blue mb-1">
-                    Pagar
-                </a>
+                {{-- AQUÍ SE AGREGA EL NOMBRE DEL USUARIO --}}
+                <div style="font-size: 11px; color: #6c757d; margin-bottom: 4px; font-weight: 600;">
+                    Atiende: {{ $order->user->name ?? 'N/A' }}
+                </div>
+                {{-- FIN DEL NOMBRE DEL USUARIO --}}
 
                 <form action="{{ route('waiter.complete', $order->id) }}" method="POST"
                       onsubmit="return confirm('¿Seguro que deseas CERRAR y LIBERAR la Mesa {{ $t->table_number }}? Esto marca la orden #{{ $order->id }} como CERRADA.')">

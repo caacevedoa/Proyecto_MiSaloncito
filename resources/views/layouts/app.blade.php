@@ -23,7 +23,7 @@
 
         {{-- NAVBAR --}}
         <nav class="navbar navbar-expand-md navbar-dark" 
-             style="background-color:#2c3e50;">
+             style="background-color:#002244;">
             <div class="container">
 
                 <a class="navbar-brand fw-bold text-white" href="{{ url('/') }}">

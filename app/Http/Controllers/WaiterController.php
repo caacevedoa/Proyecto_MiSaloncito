@@ -89,7 +89,6 @@ class WaiterController extends Controller
         $details = OrderDetail::where('order_id', $order->id)->get();
         $total = $details->sum('subtotal');
 
-
         return view('waiter.manage_order', compact('order', 'details', 'productsByType', 'total'));
     }
 
@@ -121,9 +120,18 @@ class WaiterController extends Controller
         return redirect()->back();
     }
 
-    public function addProduct(Request $request, $order_id)
+   public function addProduct(Request $request, $order_id)
     {
+        $order = Order::findOrFail($order_id);
         $product = Product::findOrFail($request->product_id);
+
+        // 🔄 REABRIR ORDEN SI ESTÁ EN ESTADO ENTREGADO
+        $is_reactivated = false;
+        if ($order->status === 'entregado') {
+            $order->status = 'pendiente';
+            $order->save();
+            $is_reactivated = true;
+        }
 
         // Buscar si ya existe en el pedido
         $detail = OrderDetail::where('order_id', $order_id)
@@ -144,42 +152,95 @@ class WaiterController extends Controller
                 'comment' => ''
             ]);
         }
-
-        return redirect()->back();
+        
+        // Retornar con el flash para que la vista lo capture
+        $redirect = redirect()->back();
+        if ($is_reactivated) {
+            $redirect->with('reactivated', true);
+        }
+        return $redirect;
     }
 
     public function updateQuantity(Request $request, $detail_id)
     {
         $detail = OrderDetail::findOrFail($detail_id);
-        
-        // Evitar cantidades negativas o cero
-        if ($request->quantity <= 0) {
-            // Si la cantidad es cero o menos, se elimina el detalle
-            $this->deleteDetail($detail_id);
-            return redirect()->back();
+        $order = $detail->order;
+
+        // 🔄 REABRIR ORDEN SI ESTÁ ENTREGADA
+        $is_reactivated = false;
+        if ($order->status === 'entregado') {
+            $order->status = 'pendiente';
+            $order->save();
+            $is_reactivated = true;
         }
 
-        $detail->quantity = $request->quantity;
-        $detail->subtotal = $detail->quantity * $detail->unit_price;
-        $detail->save();
+        $newQty = intval($request->quantity);
 
-        return redirect()->back();
+        // Si la nueva cantidad es 0, se elimina el detalle
+        if ($newQty == 0) {
+            $detail->delete();
+        } else {
+            // Asegura que la cantidad no sea negativa si no se usa el botón de eliminar
+            $newQty = max(1, $newQty); 
+            $detail->quantity = $newQty;
+            $detail->subtotal = $newQty * $detail->unit_price;
+            $detail->save();
+        }
+
+        // Retornar con el flash para que la vista lo capture
+        $redirect = redirect()->back();
+        if ($is_reactivated) {
+            $redirect->with('reactivated', true);
+        }
+        return $redirect;
     }
+
 
     public function deleteDetail($detail_id)
     {
-        OrderDetail::findOrFail($detail_id)->delete();
-        return redirect()->back();
+        $detail = OrderDetail::findOrFail($detail_id);
+        $order = $detail->order;
+
+        // 🔄 REABRIR ORDEN SI ESTÁ ENTREGADA 
+        $is_reactivated = false;
+        if ($order->status === 'entregado') {
+            $order->status = 'pendiente';
+            $order->save();
+            $is_reactivated = true;
+        }
+        
+        $detail->delete();
+
+        // Retornar con el flash para que la vista lo capture
+        $redirect = redirect()->back();
+        if ($is_reactivated) {
+            $redirect->with('reactivated', true);
+        }
+        return $redirect;
     }
 
     public function updateComment(Request $request, $detail_id)
     {
         $detail = OrderDetail::findOrFail($detail_id);
+        $order = $detail->order;
+
+        // 🔄 REABRIR ORDEN SI ESTÁ ENTREGADA
+        $is_reactivated = false;
+        if ($order->status === 'entregado') {
+            $order->status = 'pendiente';
+            $order->save();
+            $is_reactivated = true;
+        }
+
         $detail->comment = $request->comment;
         $detail->save();
-        
-        // Redirige sin un mensaje de éxito para una experiencia fluida de "guardado automático"
-        return redirect()->back();
+
+        // Retornar con el flash para que la vista lo capture
+        $redirect = redirect()->back();
+        if ($is_reactivated) {
+            $redirect->with('reactivated', true);
+        }
+        return $redirect;
     }
 
     public function completeOrder($order_id)
@@ -195,7 +256,7 @@ class WaiterController extends Controller
         return redirect()->route('waiter.mode')->with('success', 'Orden #' . $order->id . ' cerrada y mesa liberada.');
     }
 
- public function cancelOrder(Request $request, $order_id)
+   public function cancelOrder(Request $request, $order_id)
     {
         // VALIDACIÓN: El motivo de cancelación es obligatorio
         $request->validate([

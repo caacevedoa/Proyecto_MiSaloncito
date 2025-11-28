@@ -1,3 +1,7 @@
+@extends('layouts.app')
+
+@section('content')
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -25,11 +29,41 @@
             margin: 20px;
         }
 
-        h1 {
-            color: var(--primary-dark);
+        /* MODIFICADO: Contenedor para el título y el botón de volver */
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             border-bottom: 3px solid var(--accent-grey);
-            padding-bottom: 5px;
+            padding-bottom: 10px;
             margin-bottom: 20px;
+        }
+
+        .header-row h1 {
+            color: var(--primary-dark);
+            margin: 0;
+            padding: 0;
+            border: none; /* Quitamos el borde individual del h1 */
+        }
+
+        /* NUEVO: Estilo para el botón volver */
+        .btn-back {
+            background-color: var(--accent-grey);
+            color: var(--primary-dark);
+            text-decoration: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .btn-back:hover {
+            background-color: #9aa1a7;
+            transform: translateY(-2px);
+            color: #000;
         }
         
         /* Contenedor principal de la Orden y el Total (NUEVO) */
@@ -99,8 +133,6 @@
             background-color: var(--bg-light);
         }
 
-        /* Campos de solo lectura ya no existen, solo hidden inputs */
-        
         /* Botón Crear Pago (similar a waiter-mode-btn) */
         form button[type="submit"] {
             background-color: var(--primary-dark);
@@ -214,7 +246,14 @@
 </head>
 <body>
 
-    <h1>Registrar Pago</h1>
+    {{-- HEADER CON TÍTULO Y BOTÓN DE VOLVER --}}
+    <div class="header-row">
+        <h1>Registrar Pago</h1>
+        {{-- Botón para volver al Salón (waiter.mode) --}}
+        <a href="{{ route('waiter.mode') }}" class="btn-back">
+            ← Volver al Salón
+        </a>
+    </div>
     
     @if(session('success'))
         <p style="color: var(--color-success); font-weight: bold;">{{ session('success') }}</p>
@@ -292,8 +331,9 @@
         <table border="1">
             <thead>
                 <tr>
-                    <th>ID</th>
+                    <th>ID Pago</th>
                     <th>Orden</th>
+                    <th>Mesa</th> {{-- NUEVA COLUMNA --}}
                     <th>Fecha y hora</th>
                     <th>Método de pago</th>
                     <th>Total</th>
@@ -302,20 +342,37 @@
                 </tr>
             </thead>
             <tbody>
-                {{-- Nota: Asumo que la variable $payments sigue siendo pasada a esta vista --}}
                 @foreach ($payments as $payment)
                     <tr>
                         <td>{{ $payment->id }}</td>
                         <td>{{ $payment->order->id }}</td>
+
+                        {{-- NUEVA COLUMNA CON LA MESA --}}
+                        <td>
+                            {{ $payment->order->table->table_number ?? 'N/A' }}
+                        </td>
+
                         <td>{{ $payment->payment_date }}</td>
                         <td>{{ $payment->payment_method }}</td>
-                        {{-- APLICAR FORMATO DE MILES AQUÍ --}}
+                        
+                        {{-- Formato de miles --}}
                         <td>${{ number_format($payment->total_pay, 0, '.', ',') }}</td>
+                        
                         <td>{{ $payment->payment_status }}</td>
+
                         <td>
-                            <a href="{{ route('payments.invoice', $payment->order_id) }}" class="action-link invoice">Ver Factura</a>
-                            <a href="{{ route('factura.pdf', $payment->order_id) }}" class="action-link pdf">Descargar Factura</a>
-                            <a href="{{ route('payments.edit', $payment->id) }}" class="action-link edit">Editar</a>
+                            <a href="{{ route('payments.invoice', $payment->order_id) }}" class="action-link invoice">
+                                Ver Factura
+                            </a>
+
+                            <a href="{{ route('factura.pdf', $payment->order_id) }}" class="action-link pdf">
+                                Descargar Factura
+                            </a>
+
+                            <a href="{{ route('payments.edit', $payment->id) }}" class="action-link edit">
+                                Editar
+                            </a>
+
                             <form action="{{ route('payments.destroy', $payment->id) }}" method="POST" style="display:inline;" class="action-link delete">
                                 @csrf
                                 @method('DELETE')
@@ -326,6 +383,7 @@
                 @endforeach
             </tbody>
         </table>
+
     </div>
 
     <script>
@@ -364,3 +422,5 @@
     
 </body>
 </html>
+
+@endsection

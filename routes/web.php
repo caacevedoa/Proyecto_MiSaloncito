@@ -25,7 +25,7 @@ Route::resource('ordersdetail', OrderDetailController::class);
 Route::resource('payments', PaymentController::class);
 Route::resource('metrics', MetricController::class);
 
-Route::get('payments_order/{id}', [PaymentController::class, 'pay'])->name('payments_order.pay');
+//Route::get('payments_order/{id}', [PaymentController::class, 'pay'])->name('payments_order.pay');
 Route::get('/factura/{id}', [PaymentController::class, 'invoice'])->name('payments.invoice');
 Route::get('/factura/{id}/pdf', [ReceiptController::class, 'descargarFactura'])
     ->name('factura.pdf');
@@ -75,7 +75,7 @@ Route::post('/waiter/order/{order_id}/add', [WaiterController::class, 'addProduc
 Route::post('/detail/{detail}/quantity', [WaiterController::class, 'updateQuantity'])->name('waiter.updateQuantity');
 Route::post('/detail/{detail}/comment', [WaiterController::class, 'updateComment'])->name('waiter.updateComment');
 Route::delete('/detail/{detail}/delete', [WaiterController::class, 'deleteDetail'])->name('waiter.deleteDetail');
-Route::get('/waiter/{order}/pay', [WaiterController::class, 'goPay'])->name('ver_crear_pagos');
+//Route::get('/waiter/{order}/pay', [WaiterController::class, 'goPay'])->name('ver_crear_pagos');
 Route::patch('/waiter/{id}/estado/{estado}', [WaiterController::class, 'changeStatus'])
     ->name('waiter.changeStatus');
 Route::post('/orders/{order_id}/complete', [WaiterController::class, 'completeOrder'])->name('waiter.complete');
@@ -85,3 +85,13 @@ Route::patch('/waiter/order/{order_id}/cancel', [WaiterController::class, 'cance
 
 Route::patch('/tables/{id}/estado/{estado}', [TableController::class, 'cambiarEstado'])
     ->name('tables.cambiarEstado');
+
+Route::get('/waiter/{order}/pay', 
+    [WaiterController::class, 'goPay'])
+    ->middleware(['auth', 'role:administrador'])
+    ->name('ver_crear_pagos');
+
+Route::get('payments_order/{id}', 
+    [PaymentController::class, 'pay'])
+    ->middleware(['auth', 'role:administrador'])
+    ->name('payments_order.pay');

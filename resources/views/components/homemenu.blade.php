@@ -1,8 +1,8 @@
 <style>
     .menu-select {
-        background-color: #2c3e50 !important; /* Igual que la barra */
+        background-color: #002244 !important; /* Igual que la barra */
         color: white !important;
-        border: 1px solid #2c3e50;
+        border: 1px solid #002244;
         border-radius: 6px;
         padding: 6px 10px;
         font-weight: 600;

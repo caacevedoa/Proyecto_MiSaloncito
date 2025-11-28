@@ -98,7 +98,7 @@
 <div class="container py-4 py-lg-5">
 
     <header class="header-bar text-white text-center p-4 mb-5 rounded shadow" style="background-color: var(--primary-dark) !important;">
-        <h1 class="display-5 fw-bold mb-0">Mi Saloncito <span class="fw-bolder">Gestión Centralizada</span></h1>
+        <h1 class="display-5 fw-bold mb-0">MiSaloncito - <span class="fw-bolder">Sistema de Gestión</span></h1>
     </header>
 
     {{-- INICIO DEL NUEVO MÓDULO OPERATIVO (MESERO Y COCINA) --}}
@@ -120,7 +120,7 @@
                         <a class="btn waiter-mode-btn btn-lg w-100" href="{{ route('kitchen.index') }}" 
                            style="background-color: #34495e; /* Un color distinto para Cocina */ 
                                   box-shadow: 0 4px 15px rgba(52, 73, 94, 0.6);">
-                            <i class="fas fa-utensils me-2"></i> VISTA DE COCINA
+                            <i class="fas fa-utensils me-2"></i> VISTA COCINA
                         </a>
                     </div>
                 </div>
@@ -137,7 +137,7 @@
 
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mb-5">
         
-        {{-- LA TARJETA DE COCINA FUE REMOVIDA DE ESTA SECCIÓN --}}
+   
         
         <div class="col">
             <a class="card menu-card h-100 d-flex flex-column align-items-center justify-content-center" href="{{ route('tables.index') }}">
@@ -149,42 +149,35 @@
         <div class="col">
             <a class="card menu-card h-100 d-flex flex-column align-items-center justify-content-center" href="{{ route('products.index') }}">
                 <i class="fas fa-hamburger card-icon mb-2"></i>
-                <span class="fw-semibold">Productos / Menú</span>
+                <span class="fw-semibold">Productos</span>
             </a>
         </div>
 
         <div class="col">
             <a class="card menu-card h-100 d-flex flex-column align-items-center justify-content-center" href="{{ route('orders.index') }}">
                 <i class="fas fa-receipt card-icon mb-2"></i>
-                <span class="fw-semibold">Órdenes Pendientes</span>
-            </a>
-        </div>
-
-        <div class="col">
-            <a class="card menu-card h-100 d-flex flex-column align-items-center justify-content-center" href="{{ route('ordersdetail.index') }}">
-                <i class="fas fa-clipboard-list card-icon mb-2"></i>
-                <span class="fw-semibold">Detalles Orden</span>
+                <span class="fw-semibold">Órdenes</span>
             </a>
         </div>
         
         <div class="col">
             <a class="card menu-card h-100 d-flex flex-column align-items-center justify-content-center" href="{{ route('payments.index') }}">
                 <i class="fas fa-credit-card card-icon mb-2"></i>
-                <span class="fw-semibold">Pagos / Cajas</span>
+                <span class="fw-semibold">Pagos</span>
             </a>
         </div>
 
         <div class="col">
             <a class="card menu-card h-100 d-flex flex-column align-items-center justify-content-center" href="{{ route('users.index') }}">
                 <i class="fas fa-user-friends card-icon mb-2"></i>
-                <span class="fw-semibold">Gestión de Personal</span>
+                <span class="fw-semibold">Personal</span>
             </a>
         </div>
         
         <div class="col">
             <a class="card menu-card h-100 d-flex flex-column align-items-center justify-content-center" href="{{ route('metrics.index') }}">
                 <i class="fas fa-chart-bar card-icon mb-2"></i>
-                <span class="fw-semibold">Métricas y Reportes</span>
+                <span class="fw-semibold">Métricas</span>
             </a>
         </div>
 

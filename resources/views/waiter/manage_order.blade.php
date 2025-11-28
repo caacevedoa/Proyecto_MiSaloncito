@@ -5,6 +5,7 @@
 <style>
     :root {
         --primary-dark: #2c3e50;
+        --primary-dark-hover: #1d2933;
         --accent-grey: #bdc3c7;
     }
 
@@ -30,17 +31,19 @@
         box-shadow: 0 4px 14px rgba(0,0,0,0.1);
     }
 
+    /* ===== CATEGORÍAS ===== */
     .category-btn {
         background: var(--primary-dark);
+        color: white;
         border: none;
         font-weight: 600;
     }
 
     .category-btn:hover {
-        background: #1d2933;
+        background: var(--primary-dark-hover);
     }
 
-    /* Productos */
+    /* ===== PRODUCTOS ===== */
     .product-btn {
         background: #34495e;
         border: none;
@@ -48,28 +51,41 @@
         padding: 10px;
         color: white;
         font-weight: 600;
+        width: 100%;
     }
 
     .product-btn:hover {
-        background: #2c3e50;
+        background: var(--primary-dark);
     }
 
-    /* Botones principales */
+    /* ===== BOTONES PRINCIPALES (UNIFICADOS) ===== */
     .btn-dark-blue {
         background-color: var(--primary-dark) !important;
-        border-color: var(--primary-dark) !important;
         color: white !important;
-        font-weight: 600;
         border-radius: 8px;
+        border: none;
+        font-weight: 600;
     }
 
     .btn-dark-blue:hover {
-        background-color: #1d2933 !important;
+        background-color: var(--primary-dark-hover) !important;
+    }
+
+    /* Botón secundario suave */
+    .btn-light-blue {
+        background-color: #49627a !important;
+        color: white !important;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+    }
+
+    .btn-light-blue:hover {
+        background-color: #3a4e63 !important;
     }
 
     /* Tabla */
     table {
-        background: white;
         border-radius: 10px;
         overflow: hidden;
     }
@@ -103,7 +119,15 @@
         ← Volver al Salón
     </a>
 
-    {{-- ALERTA --}}
+    {{-- ALERTA ESPECIAL --}}
+    @if (session('reactivated'))
+        <div class="alert alert-warning shadow-sm p-3 border-start border-4 border-warning mb-4">
+            <strong>Atención:</strong> Esta orden estaba <strong>ENTREGADA</strong> y fue modificada.
+            <br>Especifica claramente a cocina lo que se adicionó o cambió.
+        </div>
+    @endif
+
+    {{-- ALERTA GENERAL --}}
     @if (session('info'))
         <div class="alert alert-warning mb-4 p-3 border-start border-4 border-warning">
             {{ session('info') }}
@@ -123,36 +147,35 @@
         <h3>Agregar Productos</h3>
 
         @foreach($productsByType as $type => $items)
-        <div class="mb-3">
+            <div class="mb-3">
 
-            <button 
-                class="btn category-btn w-100"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#cat-{{ $type }}">
-                {{ strtoupper($type) }}
-            </button>
+                <button class="btn category-btn w-100"
+                        type="button"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#cat-{{ $type }}">
+                    {{ strtoupper($type) }}
+                </button>
 
-            <div class="collapse mt-2" id="cat-{{ $type }}">
-                <div class="row">
+                <div class="collapse mt-2" id="cat-{{ $type }}">
+                    <div class="row">
 
-                    @foreach($items as $p)
-                        <div class="col-6 col-md-4 mb-2">
-                            <form action="{{ route('waiter.addProduct', $order->id) }}" method="POST">
-                                @csrf
-                                <input type="hidden" name="product_id" value="{{ $p->id }}">
-                                <button class="product-btn w-100">
-                                    {{ $p->product_name }} <br>
-                                    <small>${{ number_format($p->unit_price, 0) }}</small>
-                                </button>
-                            </form>
-                        </div>
-                    @endforeach
+                        @foreach($items as $p)
+                            <div class="col-6 col-md-4 mb-2">
+                                <form action="{{ route('waiter.addProduct', $order->id) }}" method="POST">
+                                    @csrf
+                                    <input type="hidden" name="product_id" value="{{ $p->id }}">
+                                    <button class="product-btn">
+                                        {{ $p->product_name }} <br>
+                                        <small>${{ number_format($p->unit_price, 0) }}</small>
+                                    </button>
+                                </form>
+                            </div>
+                        @endforeach
 
+                    </div>
                 </div>
-            </div>
 
-        </div>
+            </div>
         @endforeach
 
         <hr>
@@ -169,29 +192,37 @@
             <tr>
                 <th>Producto</th>
                 <th>Cant.</th>
-                @if ($order->status === 'pendiente' || $order->status === 'entregado')
-                <th>Notas</th>
+                @if ($order->status !== 'cerrado' && $order->status !== 'cancelado')
+                    <th>Notas</th>
                 @endif
                 <th>Subtotal</th>
-                @if ($order->status === 'pendiente' || $order->status === 'entregado')
-                <th></th>
+                @if ($order->status !== 'cerrado' && $order->status !== 'cancelado')
+                    <th></th>
                 @endif
             </tr>
         </thead>
 
         <tbody>
-            @foreach($details as $d)
+        @foreach($details as $d)
             <tr>
                 <td>{{ $d->product->product_name }}</td>
 
                 {{-- Cantidad --}}
                 @if ($order->status === 'pendiente' || $order->status === 'entregado')
                     <td>
-                        <form action="{{ route('waiter.updateQuantity', $d->id) }}" method="POST" class="d-flex justify-content-center align-items-center">
+                        <form action="{{ route('waiter.updateQuantity', $d->id) }}" method="POST"
+                              class="d-flex justify-content-center align-items-center">
                             @csrf
-                            <button name="quantity" value="{{ $d->quantity - 1 }}" class="btn btn-danger btn-sm">-</button>
+
+                            <button name="quantity"
+                                    value="{{ $d->quantity > 1 ? $d->quantity - 1 : 0 }}"
+                                    class="btn btn-danger btn-sm">-</button>
+
                             <span class="mx-2">{{ $d->quantity }}</span>
-                            <button name="quantity" value="{{ $d->quantity + 1 }}" class="btn btn-success btn-sm">+</button>
+
+                            <button name="quantity"
+                                    value="{{ $d->quantity + 1 }}"
+                                    class="btn btn-success btn-sm">+</button>
                         </form>
                     </td>
                 @else
@@ -221,52 +252,78 @@
                         <form action="{{ route('waiter.deleteDetail', $d->id) }}" method="POST">
                             @csrf
                             @method('DELETE')
-                            <button class="btn btn-danger btn-sm">✕</button>
+                            <button class="btn btn-danger btn-sm">X</button>
                         </form>
                     </td>
                 @endif
             </tr>
-            @endforeach
+        @endforeach
         </tbody>
     </table>
 
     <h3 class="mt-3">Total: ${{ number_format($total, 0) }}</h3>
 
+    @php
+        $tieneProductos = $details->count() > 0;
+    @endphp
+
+    @if($tieneProductos)
+        @php
+            // Total pagado desde la tabla payments
+            $totalPagado = \Illuminate\Support\Facades\DB::table('payments')
+                ->where('order_id', $order->id)
+                ->sum('total_pay');
+        @endphp
+
+        @if($totalPagado >= $total && $total > 0)
+            <div class="alert alert-success mt-2">
+                ✔ Esta orden está <strong>PAGADA</strong>.
+            </div>
+        @else
+            <div class="alert alert-danger mt-2">
+                ✘ Esta orden <strong>NO está pagada</strong>.
+            </div>
+        @endif
+    @endif
+
     {{-- ====================================================
         ACCIONES FINALES
     ========================================================= --}}
-
-    <div class="mt-4 d-flex flex-wrap gap-2 align-items-center justify-content-center">
+    <div class="mt-4 d-flex flex-wrap gap-2 justify-content-center">
 
         @if ($order->status === 'entregado' || $order->status === 'pendiente')
-        <a href="{{ route('payments_order.pay', $order->id) }}" class="btn btn-dark-blue">
-            💳 Pagar
-        </a>
+            <a href="{{ route('payments_order.pay', $order->id) }}" class="btn btn-dark-blue">
+                Pagar
+            </a>
         @endif
 
-        <a href="{{ route('payments.invoice', $order->id) }}" class="btn btn-primary btn-sm" target="_blank">
-            🧾 Ver Factura
+        <a href="{{ route('payments.invoice', $order->id) }}"
+           class="btn btn-light-blue"
+           target="_blank">
+            Ver Factura
         </a>
 
-        <a href="{{ route('factura.pdf', $order->id) }}" class="btn btn-secondary btn-sm" target="_blank">
-            ⬇ Descargar PDF
+        <a href="{{ route('factura.pdf', $order->id) }}"
+           class="btn btn-secondary"
+           target="_blank">
+            Descargar Factura
         </a>
 
         @if ($order->status !== 'cerrado' && $order->status !== 'cancelado')
-        <form action="{{ route('waiter.complete', $order->id) }}" method="POST"
-              onsubmit="return confirm('¿Estás seguro de completar la orden y liberar la mesa?')">
-            @csrf
-            <button type="submit" class="btn btn-danger">
-                ✔ Completar Orden
-            </button>
-        </form>
+            <form action="{{ route('waiter.complete', $order->id) }}" method="POST"
+                  onsubmit="return confirm('¿Estás seguro de cerrar la orden y liberar la mesa?')">
+                @csrf
+                <button type="submit" class="btn btn-dark-blue">
+                    Cerrar Orden
+                </button>
+            </form>
 
-        <button class="btn btn-warning btn-sm"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#cancelForm">
-            ❌ Cancelar Orden
-        </button>
+            <button class="btn btn-danger"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#cancelForm">
+                Cancelar Orden
+            </button>
         @endif
 
     </div>
@@ -275,25 +332,23 @@
         FORMULARIO DE CANCELACIÓN
     ========================================================= --}}
     @if ($order->status !== 'cerrado' && $order->status !== 'cancelado')
+        <div class="collapse mt-3 p-3 bg-light border border-danger" id="cancelForm">
+            <h5 class="text-danger">Motivo de Cancelación</h5>
 
-    <div class="collapse mt-3 p-3 bg-light border border-danger" id="cancelForm">
-        <h5 class="text-danger">Motivo de Cancelación</h5>
+            <form action="{{ route('waiter.cancelOrder', $order->id) }}" method="POST">
+                @csrf
+                @method('PATCH')
 
-        <form action="{{ route('waiter.cancelOrder', $order->id) }}" method="POST">
-            @csrf
-            @method('PATCH')
+                <div class="mb-3">
+                    <label class="form-label">Motivo (Obligatorio):</label>
+                    <textarea name="reason" class="form-control" rows="2" required></textarea>
+                </div>
 
-            <div class="mb-3">
-                <label for="cancellation_reason" class="form-label">Motivo (Obligatorio):</label>
-                <textarea name="reason" id="cancellation_reason" class="form-control" rows="2" required></textarea>
-            </div>
-
-            <button type="submit" class="btn btn-danger w-100">
-                CONFIRMAR CANCELACIÓN
-            </button>
-        </form>
-    </div>
-
+                <button class="btn btn-danger w-100">
+                    Confirmar Cancelación
+                </button>
+            </form>
+        </div>
     @endif
 
 </div>
