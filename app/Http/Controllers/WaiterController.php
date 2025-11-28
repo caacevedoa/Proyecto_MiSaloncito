@@ -21,6 +21,39 @@ class WaiterController extends Controller
         return view('waiter.select_table', compact('tables'));
     }
 
+    /**
+     * Devuelve el estado de las mesas en formato JSON para AJAX Polling.
+     */
+    public function getTablesStatusJson()
+    {
+        $tables = Table::with(['orders' => function($q){
+            $q->whereIn('status', ['pendiente', 'entregado'])
+              ->select('id', 'table_id', 'status'); // Limitar campos
+        }])->get(['id', 'table_number', 'table_status']); // Limitar campos de la mesa
+
+        // Formatear la respuesta JSON para que sea fácil de consumir por JS
+        $formattedTables = $tables->map(function ($table) {
+            $order = $table->orders->first();
+            
+            // Determinar el estado visual/clase para el JS
+            $visual_status = $table->table_status;
+            if ($order && $table->table_status !== 'reservada') {
+                 // Si hay una orden activa, el estado visual debe reflejar la orden
+                $visual_status = ($order->status == 'entregado') ? 'lista_para_cobrar' : 'ocupada';
+            }
+            
+            return [
+                'id' => $table->id,
+                'table_number' => $table->table_number,
+                'class' => $visual_status, // Usaremos esto para cambiar la clase CSS
+                'order_id' => $order ? $order->id : null,
+                'order_status' => $order ? strtoupper($order->status) : 'LIBRE',
+            ];
+        });
+
+        return response()->json(['tables' => $formattedTables]);
+    }
+
     public function startOrder($table_id)
     {
         // Si ya hay una orden abierta (pendiente O entregado), reutilizarla
@@ -90,18 +123,7 @@ class WaiterController extends Controller
 
     public function addProduct(Request $request, $order_id)
     {
-        $order = Order::findOrFail($order_id); // Obtener la orden primero
         $product = Product::findOrFail($request->product_id);
-
-        $reopened = false;
-        // ************** LÓGICA DE REAPERTURA **************
-        if ($order->status === 'entregado') {
-            $order->status = 'pendiente';
-            $order->save();
-            $reopened = true; // Bandera para saber que fue reabierta
-        }
-        // **************************************************
-
 
         // Buscar si ya existe en el pedido
         $detail = OrderDetail::where('order_id', $order_id)
@@ -121,13 +143,6 @@ class WaiterController extends Controller
                 'subtotal' => $product->unit_price,
                 'comment' => ''
             ]);
-        }
-
-        // --- ENVIAR NOTIFICACIÓN AL MESERO ---
-        if ($reopened) {
-            return redirect()->back()->with('info', 
-                '✅ Producto agregado. ATENCIÓN: La orden fue REABIÉRTA (cambiada a PENDIENTE) para incluir "' . $product->product_name . '". La cocina debe ser notificada sobre esta adición.'
-            );
         }
 
         return redirect()->back();
@@ -180,20 +195,24 @@ class WaiterController extends Controller
         return redirect()->route('waiter.mode')->with('success', 'Orden #' . $order->id . ' cerrada y mesa liberada.');
     }
 
-    public function cancelOrder(Request $request, $order_id)
+ public function cancelOrder(Request $request, $order_id)
     {
+        // VALIDACIÓN: El motivo de cancelación es obligatorio
+        $request->validate([
+            'reason' => 'required|string|max:1000',
+        ], [
+            'reason.required' => 'El motivo de cancelación es obligatorio para cerrar la orden.',
+        ]);
+
         $order = Order::findOrFail($order_id);
         
         $order->status = 'cancelado'; 
-        
-        if ($request->filled('reason')) {
-            $order->cancellation_reason = $request->reason; 
-        } else {
-            $order->cancellation_reason = null; 
-        }
+        // El campo ya no es opcional debido a la validación
+        $order->cancellation_reason = $request->reason; 
         
         $order->save();
 
+        // Liberar la mesa
         $order->table->table_status = 'libre';
         $order->table->save();
 

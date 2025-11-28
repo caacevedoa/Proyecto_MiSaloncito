@@ -101,16 +101,33 @@
         <h1 class="display-5 fw-bold mb-0">Mi Saloncito <span class="fw-bolder">Gestión Centralizada</span></h1>
     </header>
 
+    {{-- INICIO DEL NUEVO MÓDULO OPERATIVO (MESERO Y COCINA) --}}
     <div class="row justify-content-center mb-5">
         <div class="col-lg-8">
-            <div class="bg-light p-4 p-md-5 rounded-3 shadow-lg text-center border">
-                <h2 class="mb-4 fw-light text-secondary">Área Operativa</h2>
-                <a class="btn waiter-mode-btn btn-lg w-100 w-sm-75" href="{{ route('waiter.mode') }}">
-                    <i class="fas fa-concierge-bell me-2"></i> ACTIVAR MODO MESERO
-                </a>
+            <div class="bg-light p-4 p-md-5 rounded-3 shadow-lg border">
+                <h2 class="mb-4 fw-light text-secondary text-center">Área Operativa</h2>
+                
+                <div class="row g-3">
+                    {{-- BOTÓN MODO MESERO --}}
+                    <div class="col-md-6">
+                        <a class="btn waiter-mode-btn btn-lg w-100" href="{{ route('waiter.mode') }}">
+                            <i class="fas fa-concierge-bell me-2"></i> MODO MESERO
+                        </a>
+                    </div>
+                    
+                    {{-- NUEVO BOTÓN: VISTA DE COCINA --}}
+                    <div class="col-md-6">
+                        <a class="btn waiter-mode-btn btn-lg w-100" href="{{ route('kitchen.index') }}" 
+                           style="background-color: #34495e; /* Un color distinto para Cocina */ 
+                                  box-shadow: 0 4px 15px rgba(52, 73, 94, 0.6);">
+                            <i class="fas fa-utensils me-2"></i> VISTA DE COCINA
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
+    {{-- FIN DEL NUEVO MÓDULO OPERATIVO --}}
 
     <hr class="my-5" style="border-top: 2px dashed var(--accent-grey);">
 
@@ -119,6 +136,8 @@
     </div>
 
     <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 mb-5">
+        
+        {{-- LA TARJETA DE COCINA FUE REMOVIDA DE ESTA SECCIÓN --}}
         
         <div class="col">
             <a class="card menu-card h-100 d-flex flex-column align-items-center justify-content-center" href="{{ route('tables.index') }}">
