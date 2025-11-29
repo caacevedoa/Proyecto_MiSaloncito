@@ -153,6 +153,8 @@ class WaiterController extends Controller
             ]);
         }
         
+        $this->updateOrderTotal($order_id);
+
         // Retornar con el flash para que la vista lo capture
         $redirect = redirect()->back();
         if ($is_reactivated) {
@@ -187,6 +189,8 @@ class WaiterController extends Controller
             $detail->save();
         }
 
+        $this->updateOrderTotal($order->id);
+
         // Retornar con el flash para que la vista lo capture
         $redirect = redirect()->back();
         if ($is_reactivated) {
@@ -210,6 +214,8 @@ class WaiterController extends Controller
         }
         
         $detail->delete();
+
+        $this->updateOrderTotal($order->id);
 
         // Retornar con el flash para que la vista lo capture
         $redirect = redirect()->back();
@@ -279,5 +285,15 @@ class WaiterController extends Controller
 
         return redirect()->route('waiter.mode')->with('success', 
             'Orden #' . $order->id . ' ha sido cancelada exitosamente y la mesa liberada.');
+    }
+
+    private function updateOrderTotal($orderId)
+    {
+        $order = Order::findOrFail($orderId);
+        // Sumamos la columna 'subtotal' de todos los detalles relacionados
+        $newTotal = $order->details()->sum('subtotal');
+        
+        $order->total = $newTotal;
+        $order->save();
     }
 }

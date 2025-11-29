@@ -59,9 +59,9 @@ class OrderDetailController extends Controller
 
     // ✅ Recalcular total de la orden
     $order = Order::find($request->order_id);
-    if (method_exists($order, 'calculateTotal')) {
-        $order->calculateTotal();
-    }
+    $order->total = $order->details->sum(fn($d) => $d->quantity * $d->unit_price);
+    $order->save();
+
 
     // Redirigir
     return redirect()

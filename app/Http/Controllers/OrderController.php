@@ -37,6 +37,7 @@ class OrderController extends Controller
         // Foreign Keys
         $order->user_id = $request->user_id;
         $order->table_id = $request->table_id;
+        $order->total = 0;
         $order->save();
         return redirect()->route('orders.index')
             ->with('success', 'Orden creada exitosamente.');
@@ -84,11 +85,12 @@ class OrderController extends Controller
 
         public function recalculate(Order $order)
     {
-        // Llama al método del modelo que hace el trabajo pesado
-        $order->calculateTotal();
-
-        // Redirecciona de vuelta a donde se listan los detalles, o al listado principal
-        // Asumo que quieres ver la lista de órdenes actualizada
+        $order = Order::with('details')->findOrFail($order->id);
+        $totalcalculated = $order->details->sum(function($detail) {
+            return $detail->quantity * $detail->unit_price;
+        });
+        $order->total = $totalcalculated;
+        $order->save();
         return redirect()->back()->with('success', 
             'Total de la Orden #' . $order->id . ' actualizado correctamente.');
     }

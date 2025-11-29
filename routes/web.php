@@ -86,7 +86,7 @@ Route::get('/factura/{id}', [PaymentController::class, 'invoice'])
 
 Route::get('payments_order/{id}', 
     [PaymentController::class, 'pay'])
-    ->middleware(['auth', 'role:administrador'])
+    ->middleware(['auth', 'role:administrador,gerente'])
     ->name('payments_order.pay');
 
 // ------------------------------------------------------
@@ -98,19 +98,8 @@ Route::get('/factura/{id}/pdf', [ReceiptController::class, 'descargarFactura'])
 // ------------------------------------------------------
 // METRICS CONTROLLER
 // ------------------------------------------------------
-Route::resource('metrics', MetricController::class);
-
-Route::post('metrics/{metric}/update-data', 
-    [MetricController::class, 'updateMetric'])
-    ->name('metrics.update_data');
-
-Route::get('metrics/weekly', 
-    [MetricController::class, 'weekly'])
-    ->name('metrics.weekly');
-
-Route::get('metrics/monthly', 
-    [MetricController::class, 'monthly'])
-    ->name('metrics.monthly');
+Route::get('/metrics', [MetricController::class, 'index'])
+    ->name('metrics.index');
 
 // ------------------------------------------------------
 // WAITER CONTROLLER

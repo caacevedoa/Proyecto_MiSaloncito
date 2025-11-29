@@ -1,423 +1,471 @@
 @extends('layouts.app')
 
-@section('title', 'Métricas - MiSaloncito')
+@section('title', 'Métricas y Reportes')
 
 @section('content')
 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Métricas</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; background-color: #f4f4f4; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
-        th { background-color: #343a40; color: white; }
-        td { background-color: #ffffff; }
-        .highlight-green { color: #155724; background-color: #d4edda; font-weight: bold; }
-        .highlight-blue { color: #004085; background-color: #cce5ff; font-weight: bold; }
+<style>
+    /* ---------------------------------------------------------------------- */
+    /* ESTILOS DE LA PALETA MONOCROMÁTICA */
+    /* ---------------------------------------------------------------------- */
+    :root {
+        --primary-dark: #002244;
+        --accent-grey: #ADB5BD;
+        --bg-light: #FFFFFF;
+        --hover-darker-blue: #001a33;
+        --menu-card-bg-hover: rgba(173, 181, 189, 0.1);
+        --shadow-dark: rgba(0, 34, 68, 0.6);
+        /* Mantener colores específicos para alertas y feedback visual */
+        --color-success: #28a745;
+        --color-danger: #dc3545;
+        --color-warning: #ffc107;
+        --color-info: #17a2b8;
+    }
+
+    body {
+        background-color: var(--bg-light);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        color: var(--primary-dark);
+    }
+    
+    /* Título Administrativo */
+    .admin-title {
+        color: var(--primary-dark);
+        border-bottom: 3px solid var(--accent-grey);
+        display: inline-block;
+    }
+    
+    /* ---------------------------------------------------------------------- */
+    /* ESTILOS ESPECÍFICOS DE LA VISTA DE MÉTRICAS (ACORDEÓN Y HOVER) */
+    /* ---------------------------------------------------------------------- */
+    .collapse-header-row {
+        cursor: pointer; 
+        font-weight: bold; 
+        background-color: rgba(0, 34, 68, 0.05);
+        color: var(--primary-dark);
+        transition: all 0.2s ease-in-out; 
+        font-size: 1.0em;
+    }
+    
+    /* Efecto de acercamiento */
+    .collapse-header-row:hover {
+        background-color: rgba(0, 34, 68, 0.15); 
+        transform: scale(1.01); 
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    }
+    
+    .collapse-content {
+        display: none;
+        animation: fadeIn 0.3s ease-in-out;
+    }
+    .open .collapse-content {
+        display: block;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    .table-sm th, .table-sm td {
+        padding: 0.5rem; 
+    }
+    
+    /* Estilo para los encabezados de tabla oscuros consistente con la paleta */
+    .thead-dark th {
+        background-color: var(--primary-dark);
+        color: var(--bg-light);
+    }
+    
+    /* Estilo para las filas de productos, métodos de pago y otras métricas detalladas */
+    .product-detail-row {
+        font-size: 1.1em;
+    }
+    
+</style>
+
+<div class="container-fluid py-4">
+
+    <div class="text-center mb-4">
+        <h1 class="admin-title fs-2 pb-2 px-3 fw-bold text-uppercase">Métricas y Reportes</h1>
+    </div>
+    
+    <hr class="mb-5" style="border-top: 2px dashed var(--accent-grey);">
+
+    {{-- SECCIÓN 1: TARJETAS DE RESUMEN (Diario, Semanal, Mensual) --}}
+    <div class="row mb-5">
         
-        /* Estilos para el Collapsible */
-        .collapsible-button {
-            background-color: #616161;
-            color: white;
-            cursor: pointer;
-            padding: 15px;
-            width: 100%;
-            border: none;
-            text-align: left;
-            outline: none;
-            font-size: 1.2em;
-            transition: background-color 0.3s;
-            border-radius: 5px;
-            margin-top: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        .collapsible-button:hover { background-color: #4e4e4e; }
-        
-        .collapsible-content {
-            padding: 0 18px;
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out, padding 0.3s ease-out;
-            background-color: white;
-            border-left: 1px solid #ccc;
-            border-right: 1px solid #ccc;
-            border-bottom: 1px solid #ccc;
-        }
-
-        .collapsible-content.active {
-            padding: 18px;
-            /* Se usa un valor alto en CSS, luego JS ajusta el valor real */
-            max-height: 2000px; 
-        }
-
-        .flex-container {
-            display: flex;
-            gap: 40px;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            margin-top: 20px;
-        }
-        .flex-item {
-            flex: 1; 
-            min-width: 300px;
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .flex-item h2 {
-            padding: 10px;
-            border-radius: 5px;
-            margin-top: 0;
-            text-align: center;
-        }
-
-        .month-selector {
-            padding: 10px;
-            background-color: #f0f0f0;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-
-    @if (session('success'))
-        <div style="background-color: #d4edda; color: #155724; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-            {{ session('success') }}
-        </div>
-    @endif
-    @if ($errors->any())
-        <div style="background-color: #f8d7da; color: #721c24; padding: 15px; border-radius: 5px; margin-bottom: 20px;">
-            @foreach ($errors->all() as $error)
-                <p>{{ $error }}</p>
-            @endforeach
-        </div>
-    @endif
-
-    <h1>MÉTRICAS</h1>
-    <form action="{{ route('metrics.store') }}" method="post" style="margin-bottom: 30px;">
-        @csrf
-        <label>Fecha: <input type="date" name="record_date" required style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;"></label>
-        <button type="submit" style="padding: 8px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
-            Generar
-        </button>
-    </form>
-
-    {{-- ======================= SECCIÓN 1: DIARIAS ======================= --}}
-    <button class="collapsible-button" data-target="diarias-content">📅 Métricas Diarias (Histórico de Cierres)</button>
-    <div id="diarias-content" class="collapsible-content active">
-        <table>
-            <thead>
-                <tr>
-                    <th>Fecha</th>
-                    <th>Ventas</th>
-                    <th>Órdenes</th>
-                    <th>Mesero Top ($)</th>
-                    <th>Prod. Top (Cant.)</th>
-                    <th>Prod. Top ($)</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($metrics as $metric)
-                    <tr>
-                        <td>{{ $metric->record_date }}</td>
-                        <td>${{ number_format($metric->total_sales_date, 0) }}</td>
-                        <td>{{ $metric->total_orders }}</td>
-                        
-                        <td>
-                            {{ $metric->stats['waiter_name'] }} <br>
-                            <span style="font-size: 0.85em; color: green;">(${{ number_format($metric->stats['waiter_total'], 0) }})</span>
-                        </td>
-                        <td class="highlight-blue">
-                            {{ $metric->stats['pro_qty_name'] }} <br>
-                            <span style="font-size: 0.85em;">({{ $metric->stats['pro_qty_val'] }} unds)</span>
-                        </td>
-                        <td class="highlight-green">
-                            {{ $metric->stats['pro_money_name'] }} <br>
-                            <span style="font-size: 0.85em;">(${{ number_format($metric->stats['pro_money_val'], 0) }})</span>
-                        </td>
-
-                        <td>
-                            {{-- CORRECCIÓN DEL ERROR: Usamos route('metrics.update', $metric->id) --}}
-                            <form action="{{ route('metrics.update', $metric->id) }}" method="POST" style="display: inline-block;">
-                                @csrf @method("PUT")
-                                <button type="submit" title="Recalcular Top Mesero y Producto con órdenes actuales" style="background-color: #ffc107; color: #333; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
-                                    Actualizar Stats
-                                </button>
-                            </form>
-                            <form action="{{ route('metrics.destroy', $metric->id) }}" method="POST" style="display: inline-block;">
-                                @csrf @method("DELETE")
-                                <button type="submit" style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">
-                                    Eliminar
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-
-    {{-- ======================= SECCIÓN 2: SEMANALES ======================= --}}
-    <button class="collapsible-button" data-target="semanales-content">📈 Métricas Semanales (Agregación Dinámica)</button>
-    <div id="semanales-content" class="collapsible-content">
-        <table>
-            <thead>
-                <tr>
-                    <th>Año-Semana</th>
-                    <th>Ventas Totales</th>
-                    <th>Órdenes</th>
-                    <th>Mesero Top ($)</th>
-                    <th>Prod. Top (Cant.)</th>
-                    <th>Prod. Top ($)</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($weeklyMetrics as $metric)
-                    <tr>
-                        <td>{{ $metric->year }} - Sem {{ $metric->period }}</td>
-                        <td>${{ number_format($metric->total_sales, 0) }}</td>
-                        <td>{{ $metric->total_orders }}</td>
-
-                        <td>
-                            {{ $metric->stats['waiter_name'] }} <br>
-                            <small>(${{ number_format($metric->stats['waiter_total'], 0) }})</small>
-                        </td>
-                        <td>
-                            {{ $metric->stats['pro_qty_name'] }} <br>
-                            <small>({{ $metric->stats['pro_qty_val'] }} unds)</small>
-                        </td>
-                        <td>
-                            {{ $metric->stats['pro_money_name'] }} <br>
-                            <small>(${{ number_format($metric->stats['pro_money_val'], 0) }})</small>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-
-    {{-- ======================= SECCIÓN 3: MENSUALES (RESUMEN) ======================= --}}
-    <button class="collapsible-button" data-target="mensuales-resumen-content">🗓️ Métricas Mensuales (Agregación Dinámica)</button>
-    <div id="mensuales-resumen-content" class="collapsible-content">
-        <table>
-            <thead>
-                <tr>
-                    <th>Mes</th>
-                    <th>Ventas Totales</th>
-                    <th>Órdenes</th>
-                    <th>Mesero Top ($)</th>
-                    <th>Prod. Top (Cant.)</th>
-                    <th>Prod. Top ($)</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($monthlyMetrics as $metric)
-                    <tr>
-                        <td>{{ $metric->period }} {{ $metric->year }}</td>
-                        <td>${{ number_format($metric->total_sales, 0) }}</td>
-                        <td>{{ $metric->total_orders }}</td>
-
-                        <td>
-                            {{ $metric->stats['waiter_name'] }} <br>
-                            <small>(${{ number_format($metric->stats['waiter_total'], 0) }})</small>
-                        </td>
-                        <td>
-                            {{ $metric->stats['pro_qty_name'] }} <br>
-                            <small>({{ $metric->stats['pro_qty_val'] }} unds)</small>
-                        </td>
-                        <td>
-                            {{ $metric->stats['pro_money_name'] }} <br>
-                            <small>(${{ number_format($metric->stats['pro_money_val'], 0) }})</small>
-                        </td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-
-    {{-- ======================= SECCIÓN 4: GLOBALES (HISTÓRICO TOTAL) ======================= --}}
-    <button class="collapsible-button" data-target="globales-historico-content" style="background-color: #343a40;">🏆 Estadísticas Globales (Histórico Total)</button>
-    <div id="globales-historico-content" class="collapsible-content">
-        <div class="flex-container">
-            {{-- TABLA 1: RENDIMIENTO POR PRODUCTO --}}
-            <div class="flex-item">
-                <h2 style="background-color: #17a2b8; color: white;">🍔 Ranking de Ventas por Producto (Total)</h2>
-                <table border="1" style="width: 100%;">
-                    <thead>
-                        <tr>
-                            <th>Producto</th>
-                            <th>Cant. Vendida</th>
-                            <th>Total Dinero ($)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($productStats as $prod)
-                            <tr>
-                                <td>{{ $prod->product_name }}</td>
-                                <td style="text-align: center;">{{ $prod->total_qty }}</td>
-                                <td style="text-align: right;">${{ number_format($prod->total_money, 0) }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+        {{-- DIARIO (Color Primario) --}}
+        <div class="col-md-4">
+            <div class="card mb-3 shadow" style="border-color: var(--primary-dark) !important;"> 
+                <div class="card-header text-white text-center fs-5 fw-bold" style="background-color: var(--primary-dark);">VENTAS HOY</div>
+                <div class="card-body">
+                    <h5 class="card-title text-center fs-3 fw-bold" style="color: var(--primary-dark);">${{ number_format($dailyMetrics['total_sales']) }}</h5>
+                    <p class="text-center text-muted">{{ $dailyMetrics['total_orders'] }} Órdenes cerradas</p>
+                    <ul class="list-group list-group-flush">
+                        {{-- RENOMBRE DE MÉTRICAS --}}
+                        <li class="list-group-item"><strong>Mesero Más Vendedor:</strong> {{ $dailyMetrics['top_waiter'] }}</li>
+                        <li class="list-group-item"><strong>Producto Más Vendido (Cantidad):</strong> {{ $dailyMetrics['top_product_qty'] }}</li>
+                        <li class="list-group-item"><strong>Producto Más Vendido (Dinero):</strong> {{ $dailyMetrics['top_product_money'] }}</li>
+                    </ul>
+                </div>
             </div>
+        </div>
 
-            {{-- TABLA 2: RENDIMIENTO POR MESERO --}}
-            <div class="flex-item">
-                <h2 style="background-color: #e83e8c; color: white;">🤵 Ranking de Ventas por Mesero (Total)</h2>
-                <table border="1" style="width: 100%;">
-                    <thead>
-                        <tr>
-                            <th>Mesero</th>
-                            <th>Órdenes Completadas</th>
-                            <th>Total Vendido ($)</th>
-                            
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($waiterStats as $waiter)
-                            <tr>
-                                <td>{{ optional($waiter->user)->name ?? 'Usuario Eliminado' }}</td>
-                                <td style="text-align: center;">{{ $waiter->total_orders_count }}</td>
-                                <td style="text-align: right;">${{ number_format($waiter->total_money_sold, 0) }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+        {{-- SEMANAL (Color Éxito) --}}
+        <div class="col-md-4">
+            <div class="card mb-3 shadow" style="border-color: var(--color-success) !important;">
+                <div class="card-header text-white text-center fs-5 fw-bold" style="background-color: var(--primary-dark);">VENTAS SEMANA</div>
+                <div class="card-body">
+                    <h5 class="card-title text-center fs-3 fw-bold" style="color: var(--color-success);">${{ number_format($weeklyMetrics['total_sales']) }}</h5>
+                    <p class="text-center text-muted">{{ $weeklyMetrics['total_orders'] }} Órdenes cerradas</p>
+                    <ul class="list-group list-group-flush">
+                        {{-- RENOMBRE DE MÉTRICAS --}}
+                        <li class="list-group-item"><strong>Mesero Más Vendedor:</strong> {{ $weeklyMetrics['top_waiter'] }}</li>
+                        <li class="list-group-item"><strong>Producto Más Vendido (Cantidad):</strong> {{ $weeklyMetrics['top_product_qty'] }}</li>
+                        <li class="list-group-item"><strong>Producto Más Vendido (Dinero):</strong> {{ $weeklyMetrics['top_product_money'] }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        {{-- MENSUAL (Color Informativo) --}}
+        <div class="col-md-4">
+            <div class="card mb-3 shadow" style="border-color: var(--color-info) !important;">
+                <div class="card-header text-white text-center fs-5 fw-bold" style="background-color: var(--primary-dark);">VENTAS MES</div>
+                <div class="card-body">
+                    <h5 class="card-title text-center fs-3 fw-bold" style="color: var(--color-info);">${{ number_format($monthlyMetrics['total_sales']) }}</h5>
+                    <p class="text-center text-muted">{{ $monthlyMetrics['total_orders'] }} Órdenes cerradas</p>
+                    <ul class="list-group list-group-flush">
+                        {{-- RENOMBRE DE MÉTRICAS --}}
+                        <li class="list-group-item"><strong>Mesero Más Vendedor:</strong> {{ $monthlyMetrics['top_waiter'] }}</li>
+                        <li class="list-group-item"><strong>Producto Más Vendido (Cantidad):</strong> {{ $monthlyMetrics['top_product_qty'] }}</li>
+                        <li class="list-group-item"><strong>Producto Más Vendido (Dinero):</strong> {{ $monthlyMetrics['top_product_money'] }}</li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
+    
+    <hr class="mb-5" style="border-top: 1px solid var(--accent-grey);">
 
-    {{-- ======================= SECCIÓN 5: GLOBALES POR MES SELECCIONADO (DETALLE) ======================= --}}
-    {{-- TÍTULO DE LA SECCIÓN (Botón desplegable) --}}
-    <button class="collapsible-button" data-target="mensuales-detalle-content" style="background-color: #28a745;">✨ Estadísticas Detalladas del Mes Seleccionado ({{ $lastMonthName }})</button>
-    <div id="mensuales-detalle-content" class="collapsible-content">
-        
-        {{-- FORMULARIO PARA SELECCIONAR EL MES --}}
-        <div class="month-selector">
-            <form action="{{ route('metrics.index') }}" method="GET" style="display: inline-block;">
-                <label for="selected_month">Seleccionar Mes:</label>
-                <select name="selected_month" id="selected_month" onchange="this.form.submit()" 
-                        style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
-                    
-                    {{-- Opciones generadas por el controlador --}}
-                    @foreach ($availableMonths as $month)
-                        <option value="{{ $month->month_year }}" 
-                            {{ $month->month_year == $selectedMonth ? 'selected' : '' }}>
-                            {{ $month->month_name }} {{ $month->year }}
-                        </option>
-                    @endforeach
-
-                </select>
+    {{-- SECCIÓN 2: ESTADÍSTICAS DETALLADAS POR MES --}}
+    <div class="card mb-5 shadow-lg">
+        <div class="card-header d-flex justify-content-between align-items-center text-white" style="background-color: var(--primary-dark);">
+            <h4 class="mb-0 fw-bold">Estadísticas Detalladas del Mes</h4>
+            
+            <form action="{{ route('metrics.index') }}" method="GET" class="form-inline">
+                <label for="month" class="mr-2 text-white">Seleccionar Mes: </label>
+                <input type="month" name="month" id="month" class="form-control mr-2" value="{{ $selectedMonth }}" onchange="this.form.submit()">
             </form>
         </div>
-
-        <div class="flex-container">
-            {{-- TABLA 1: RENDIMIENTO POR PRODUCTO (MENSUAL) --}}
-            <div class="flex-item">
-                {{-- CAMBIO AQUÍ: Usamos $lastMonthName --}}
-                <h2 style="background-color: #17a2b8; color: white;">🍔 Ranking de Ventas por Producto ({{ $lastMonthName }})</h2>
-                <table border="1" style="width: 100%;">
-                    <thead>
-                        <tr>
-                            <th>Producto</th>
-                            <th>Cant. Vendida</th>
-                            <th>Total Dinero ($)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($monthlyProductStats as $prod)
+        <div class="card-body">
+            <div class="row">
+                {{-- Tabla por Categoría (CON DESGLOSE Y %) --}}
+                <div class="col-md-6">
+                    <h5 class="fw-bold mb-3">Ventas por Categoría</h5>
+                    <table class="table table-striped table-hover table-sm border">
+                        <thead class="thead-dark">
                             <tr>
-                                <td>{{ $prod->product_name }}</td>
-                                <td style="text-align: center;">{{ $prod->total_qty }}</td>
-                                <td style="text-align: right;">${{ number_format($prod->total_money, 0) }}</td>
+                                <th>Categoría</th>
+                                <th class="text-right">Cantidad</th>
+                                <th class="text-right">Dinero</th>
+                                <th class="text-right">% Total</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @foreach ($detailedStats['sales_by_category'] as $cat)
+                                {{-- Fila principal de la categoría (con efecto hover/zoom) --}}
+                                <tr class="collapse-header-row" onclick="toggleAccordion(this.nextElementSibling)"> 
+                                    <td>{{ ucfirst($cat['type']) }}</td>
+                                    <td class="text-right">{{ $cat['quantity'] }}</td>
+                                    <td class="text-right">${{ number_format($cat['total_money']) }}</td>
+                                    <td class="text-right">{{ $cat['percentage'] }}%</td>
+                                </tr>
+
+                                {{-- Fila del contenido colapsable (Desglose de productos) --}}
+                                <tr>
+                                    <td colspan="4" class="p-0 border-0">
+                                        <div class="collapse-content"> 
+                                            <table class="table table-sm m-0">
+                                                <thead class="bg-light">
+                                                    <tr>
+                                                        <th>Producto</th>
+                                                        <th class="text-right">Cant.</th>
+                                                        <th class="text-right">Dinero</th>
+                                                        <th class="text-right">% Cat</th> 
+                                                        <th class="text-right">% Total (Global)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($cat['products'] as $prod)
+                                                        @php
+                                                            $catPercentage = ($cat['total_money'] > 0) 
+                                                                ? number_format(($prod['total_money'] / $cat['total_money']) * 100, 2) 
+                                                                : 0;
+                                                        @endphp
+                                                        <tr class="product-detail-row"> 
+                                                            <td>&nbsp;&nbsp;&nbsp;→ {{ $prod['product_name'] }}</td>
+                                                            <td class="text-right">{{ $prod['quantity'] }}</td>
+                                                            <td class="text-right">${{ number_format($prod['total_money']) }}</td>
+                                                            <td class="text-right text-success font-weight-bold">{{ $catPercentage }}%</td> 
+                                                            <td class="text-right text-muted">{{ $prod['percentage'] }}%</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+
+                {{-- Tabla por Mesero (MES) --}}
+                <div class="col-md-6">
+                    <h5 class="fw-bold mb-3">Rendimiento Meseros (Mes Seleccionado)</h5>
+                    <table class="table table-striped table-hover table-sm border">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Mesero</th>
+                                <th class="text-center">Órdenes</th>
+                                <th class="text-right">Total Vendido</th>
+                                <th class="text-right">% Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php
+                                $monthlyTotalSales = $detailedStats['total_sales'] ?? 1; // Total para el cálculo
+                            @endphp
+                            @foreach ($detailedStats['waiter_stats'] as $waiter)
+                                @php
+                                    $waiterPercentage = ($monthlyTotalSales > 0) 
+                                        ? number_format(($waiter['total_sold'] / $monthlyTotalSales) * 100, 2) 
+                                        : 0;
+                                @endphp
+                                <tr class="product-detail-row"> 
+                                    <td>{{ $waiter['name'] }}</td>
+                                    <td class="text-center">{{ $waiter['orders_count'] }}</td>
+                                    <td class="text-right">${{ number_format($waiter['total_sold']) }}</td>
+                                    {{-- AJUSTE: % en color negro --}}
+                                    <td class="text-right text-black font-weight-bold">{{ $waiterPercentage }}%</td> 
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
             </div>
-
-            {{-- TABLA 2: RENDIMIENTO POR MESERO (MENSUAL) --}}
-            <div class="flex-item">
-                {{-- CAMBIO AQUÍ: Usamos $lastMonthName --}}
-                <h2 style="background-color: #e83e8c; color: white;">🤵 Ranking de Ventas por Mesero ({{ $lastMonthName }})</h2>
-                <table border="1" style="width: 100%;">
-                    <thead>
-                        <tr>
-                            <th>Mesero</th>
-                            <th>Órdenes Completadas</th>
-                            <th>Total Vendido ($)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($monthlyWaiterStats as $waiter)
+            
+            {{-- 💳 Tabla por Método de Pago (MES) --}}
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h5 class="fw-bold mb-3">Ventas por Método de Pago (Mes Seleccionado)</h5>
+                    <table class="table table-striped table-hover table-sm border">
+                        <thead class="thead-dark">
                             <tr>
-                                <td>{{ optional($waiter->user)->name ?? 'Usuario Eliminado' }}</td>
-                                <td style="text-align: center;">{{ $waiter->total_orders_count }}</td>
-                                <td style="text-align: right;">${{ number_format($waiter->total_money_sold, 0) }}</td>
+                                <th>Método de Pago</th>
+                                <th class="text-right">Monto Recaudado</th>
+                                <th class="text-right">% Total Recaudado</th> 
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @php
+                                $paymentMethods = $detailedStats['payment_methods'] ?? [];
+                                $monthlyRecaudadoTotal = collect($paymentMethods)->sum('total_money');
+                                $monthlyDenominator = ($monthlyRecaudadoTotal > 0) ? $monthlyRecaudadoTotal : 1;
+                            @endphp
+                            
+                            @forelse ($paymentMethods as $method)
+                                @php
+                                    $totalMoney = data_get($method, 'total_money', 0);
+                                    $methodName = data_get($method, 'payment_method', 'Desconocido'); 
+                                    $methodPercentage = number_format(($totalMoney / $monthlyDenominator) * 100, 2); 
+                                @endphp
+                                <tr class="product-detail-row"> 
+                                    <td>{{ $methodName }}</td>
+                                    <td class="text-right">${{ number_format($totalMoney) }}</td>
+                                    <td class="text-right text-black">{{ $methodPercentage }}%</td> 
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-3">
+                                        ⚠️ **ADVERTENCIA:** No se encontraron datos de métodos de pago para este mes.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var buttons = document.querySelectorAll('.collapsible-button');
+    {{-- SECCIÓN 3: ESTADÍSTICAS GLOBALES (HISTÓRICO) --}}
+    <div class="card mb-5 shadow-lg" style="background-color: var(--menu-card-bg-hover);">
+        <div class="card-header text-white" style="background-color: var(--primary-dark);">
+            <h4 class="mb-0 fw-bold">Histórico Global (Desde el inicio)</h4>
+        </div>
+        <div class="card-body">
+            <div class="row text-center mb-4">
+                <div class="col-md-6">
+                    <h2 class="fw-bolder" style="color: var(--primary-dark);">${{ number_format($globalStats['total_sales']) }}</h2>
+                    <span class="text-muted">Ventas Totales Históricas</span>
+                </div>
+                <div class="col-md-6">
+                    <h2 class="fw-bolder" style="color: var(--primary-dark);">{{ $globalStats['total_orders'] }}</h2>
+                    <span class="text-muted">Órdenes Completadas Totales</span>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="row mt-4">
+                 {{-- Tabla Global por Categoría (CON DESGLOSE Y %) --}}
+                <div class="col-md-6">
+                    <h5 class="fw-bold mb-3">Global por Categoría</h5>
+                    <table class="table table-bordered table-sm table-hover border">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Categoría</th>
+                                <th class="text-right">Cant.</th>
+                                <th class="text-right">Dinero</th>
+                                <th class="text-right">% Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach ($globalStats['sales_by_category'] as $cat)
+                                {{-- Fila principal de la categoría (con efecto hover/zoom) --}}
+                                <tr class="collapse-header-row" onclick="toggleAccordion(this.nextElementSibling)">
+                                    <td>{{ ucfirst($cat['type']) }}</td>
+                                    <td class="text-right">{{ $cat['quantity'] }}</td>
+                                    <td class="text-right">${{ number_format($cat['total_money']) }}</td>
+                                    <td class="text-right">{{ $cat['percentage'] }}%</td>
+                                </tr>
+
+                                {{-- Fila del contenido colapsable (Desglose de productos) --}}
+                                <tr>
+                                    <td colspan="4" class="p-0 border-0">
+                                        <div class="collapse-content">
+                                            <table class="table table-sm m-0">
+                                                <thead class="bg-light">
+                                                    <tr>
+                                                        <th>Producto</th>
+                                                        <th class="text-right">Cant.</th>
+                                                        <th class="text-right">Dinero</th>
+                                                        <th class="text-right">% Cat</th> 
+                                                        <th class="text-right">% Total (Global)</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    @foreach ($cat['products'] as $prod)
+                                                        @php
+                                                            $catPercentage = ($cat['total_money'] > 0) 
+                                                                ? number_format(($prod['total_money'] / $cat['total_money']) * 100, 2) 
+                                                                : 0;
+                                                        @endphp
+                                                        <tr class="product-detail-row"> 
+                                                            <td>&nbsp;&nbsp;&nbsp;→ {{ $prod['product_name'] }}</td>
+                                                            <td class="text-right">{{ $prod['quantity'] }}</td>
+                                                            <td class="text-right">${{ number_format($prod['total_money']) }}</td>
+                                                            <td class="text-right text-success font-weight-bold">{{ $catPercentage }}%</td>
+                                                            <td class="text-right text-muted">{{ $prod['percentage'] }}%</td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+                
+                {{-- Tabla Global por Mesero --}}
+                <div class="col-md-6">
+                    <h5 class="fw-bold mb-3">Global por Mesero</h5>
+                    <table class="table table-bordered table-sm table-hover border">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Mesero</th>
+                                <th class="text-center">Órdenes</th>
+                                <th class="text-right">Vendido</th>
+                                <th class="text-right">% Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php
+                                $globalTotalSales = $globalStats['total_sales'] ?? 1; // Total para el cálculo
+                            @endphp
+                            @foreach ($globalStats['waiter_stats'] as $waiter)
+                                @php
+                                    $waiterPercentage = ($globalTotalSales > 0) 
+                                        ? number_format(($waiter['total_sold'] / $globalTotalSales) * 100, 2) 
+                                        : 0;
+                                @endphp
+                                <tr class="product-detail-row"> 
+                                    <td>{{ $waiter['name'] }}</td>
+                                    <td class="text-center">{{ $waiter['orders_count'] }}</td>
+                                    <td class="text-right">${{ number_format($waiter['total_sold']) }}</td>
+                                    {{-- AJUSTE: % en color negro --}}
+                                    <td class="text-right text-black font-weight-bold">{{ $waiterPercentage }}%</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
             
-            buttons.forEach(button => {
-                const targetId = button.getAttribute('data-target');
-                const content = document.getElementById(targetId);
+            {{-- 💳 Tabla por Método de Pago (GLOBAL) --}}
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <h5 class="fw-bold mb-3">Ventas por Método de Pago (Global)</h5>
+                    <table class="table table-bordered table-sm table-hover border">
+                        <thead class="thead-dark">
+                            <tr>
+                                <th>Método de Pago</th>
+                                <th class="text-right">Monto Recaudado</th>
+                                <th class="text-right">% Total Recaudado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php
+                                $globalPaymentMethods = $globalStats['payment_methods'] ?? [];
+                                $globalRecaudadoTotal = collect($globalPaymentMethods)->sum('total_money');
+                                $globalDenominator = ($globalRecaudadoTotal > 0) ? $globalRecaudadoTotal : 1;
+                            @endphp
+                            
+                            @forelse ($globalPaymentMethods as $method)
+                                @php
+                                    $totalMoney = data_get($method, 'total_money', 0);
+                                    $methodName = data_get($method, 'payment_method', 'Desconocido');
+                                    $methodPercentage = number_format(($totalMoney / $globalDenominator) * 100, 2);
+                                @endphp
+                                <tr class="product-detail-row"> 
+                                    <td>{{ $methodName }}</td>
+                                    <td class="text-right">${{ number_format($totalMoney) }}</td>
+                                    <td class="text-right text-black">{{ $methodPercentage }}%</td> 
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-3">
+                                        ⚠️ **ADVERTENCIA:** No se encontraron datos de métodos de pago para el histórico global.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-                // Inicializar el estado si no está activo
-                if (content && !content.classList.contains('active')) {
-                    content.style.maxHeight = '0';
-                    content.style.padding = '0 18px';
-                }
-
-                button.addEventListener('click', function() {
-                    if (content) {
-                        // Toggle the 'active' class
-                        content.classList.toggle('active');
-                        
-                        if (content.classList.contains('active')) {
-                            // Abrir: ajustar la altura
-                            // Usamos setTimeout para asegurar que el scrollHeight se calcule después del renderizado del DOM
-                            setTimeout(() => {
-                                content.style.maxHeight = content.scrollHeight + "px";
-                            }, 50);
-                            content.style.padding = '18px';
-                        } else {
-                            // Cerrar
-                            content.style.maxHeight = '0';
-                            content.style.padding = '0 18px'; 
-                        }
-                    }
-                });
-            });
-
-            // Ajuste inicial para la sección 'Diarias' que comienza activa
-            const activeContent = document.getElementById('diarias-content');
-            if (activeContent && activeContent.classList.contains('active')) {
-                // Se espera un momento para que el DOM se calcule correctamente
-                setTimeout(() => {
-                    activeContent.style.maxHeight = activeContent.scrollHeight + "px";
-                }, 50);
-            }
-        });
-    </script>
-    <br><br><br>
-
-</body>
-</html>
+<script>
+    /**
+     * Función para abrir/cerrar el acordeón basado en la siguiente fila (sibling).
+     */
+    function toggleAccordion(contentRow) {
+        contentRow.classList.toggle('open');
+    }
+</script>
+@endsection
