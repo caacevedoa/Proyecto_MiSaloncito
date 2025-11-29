@@ -6,7 +6,7 @@
 
 <style>
     /* ---------------------------------------------------------------------- */
-    /* ESTILOS DE LA PALETA MONOCROMÁTICA */
+    /* ESTILOS DE LA PALETA MONOCROMÁTICA (SIN CAMBIOS) */
     /* ---------------------------------------------------------------------- */
     :root {
         --primary-dark: #002244;
@@ -78,6 +78,38 @@
     /* Estilo para las filas de productos, métodos de pago y otras métricas detalladas */
     .product-detail-row {
         font-size: 1.1em;
+    }
+    
+    /* ====================================================================== */
+    /* MODIFICACIONES RESPONSIVE PARA EL DESGLOSE DE CATEGORÍAS */
+    /* ====================================================================== */
+    
+    /* 1. Ocultar el Desglose de Productos en el Colapsable en móviles */
+    /* Oculta las columnas de porcentaje para liberar espacio en la tabla anidada */
+    /* Esta regla se aplica a pantallas extra-pequeñas (teléfonos) */
+    @media (max-width: 575.98px) {
+        /* Oculta las columnas % Cat y % Total (Global) en la tabla de productos (colapsable) */
+        .collapse-content .table-sm thead th:nth-child(4), 
+        .collapse-content .table-sm tbody td:nth-child(4),
+        .collapse-content .table-sm thead th:nth-child(5), 
+        .collapse-content .table-sm tbody td:nth-child(5) {
+            display: none !important;
+        }
+
+        /* En la tabla principal, oculta la columna % Total */
+        .table-category-main thead th:nth-child(4), 
+        .table-category-main tbody td:nth-child(4) {
+             display: none !important;
+        }
+    }
+    
+    /* 2. Ajuste para pantallas pequeñas (small devices) - Mantenemos algunas columnas */
+    @media (min-width: 576px) and (max-width: 767.98px) {
+        /* Oculta solo el % Total Global para el desglose de productos */
+        .collapse-content .table-sm thead th:nth-child(5), 
+        .collapse-content .table-sm tbody td:nth-child(5) {
+            display: none !important;
+        }
     }
     
 </style>
@@ -160,98 +192,106 @@
         <div class="card-body">
             <div class="row">
                 {{-- Tabla por Categoría (CON DESGLOSE Y %) --}}
-                <div class="col-md-6">
+                <div class="col-md-6 mb-4 mb-md-0">
                     <h5 class="fw-bold mb-3">Ventas por Categoría</h5>
-                    <table class="table table-striped table-hover table-sm border">
-                        <thead class="thead-dark">
-                            <tr>
-                                <th>Categoría</th>
-                                <th class="text-right">Cantidad</th>
-                                <th class="text-right">Dinero</th>
-                                <th class="text-right">% Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($detailedStats['sales_by_category'] as $cat)
-                                {{-- Fila principal de la categoría (con efecto hover/zoom) --}}
-                                <tr class="collapse-header-row" onclick="toggleAccordion(this.nextElementSibling)"> 
-                                    <td>{{ ucfirst($cat['type']) }}</td>
-                                    <td class="text-right">{{ $cat['quantity'] }}</td>
-                                    <td class="text-right">${{ number_format($cat['total_money']) }}</td>
-                                    <td class="text-right">{{ $cat['percentage'] }}%</td>
-                                </tr>
-
-                                {{-- Fila del contenido colapsable (Desglose de productos) --}}
+                    {{-- AGREGAR CLASE table-responsive PARA SCROLL HORIZONTAL --}}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover table-sm border table-category-main">
+                            <thead class="thead-dark">
                                 <tr>
-                                    <td colspan="4" class="p-0 border-0">
-                                        <div class="collapse-content"> 
-                                            <table class="table table-sm m-0">
-                                                <thead class="bg-light">
-                                                    <tr>
-                                                        <th>Producto</th>
-                                                        <th class="text-right">Cant.</th>
-                                                        <th class="text-right">Dinero</th>
-                                                        <th class="text-right">% Cat</th> 
-                                                        <th class="text-right">% Total (Global)</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach ($cat['products'] as $prod)
-                                                        @php
-                                                            $catPercentage = ($cat['total_money'] > 0) 
-                                                                ? number_format(($prod['total_money'] / $cat['total_money']) * 100, 2) 
-                                                                : 0;
-                                                        @endphp
-                                                        <tr class="product-detail-row"> 
-                                                            <td>&nbsp;&nbsp;&nbsp;→ {{ $prod['product_name'] }}</td>
-                                                            <td class="text-right">{{ $prod['quantity'] }}</td>
-                                                            <td class="text-right">${{ number_format($prod['total_money']) }}</td>
-                                                            <td class="text-right text-success font-weight-bold">{{ $catPercentage }}%</td> 
-                                                            <td class="text-right text-muted">{{ $prod['percentage'] }}%</td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </td>
+                                    <th>Categoría</th>
+                                    <th class="text-right">Cantidad</th>
+                                    <th class="text-right">Dinero</th>
+                                    <th class="text-right">% Total</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach ($detailedStats['sales_by_category'] as $cat)
+                                    {{-- Fila principal de la categoría (con efecto hover/zoom) --}}
+                                    <tr class="collapse-header-row" onclick="toggleAccordion(this.nextElementSibling)"> 
+                                        <td>{{ ucfirst($cat['type']) }}</td>
+                                        <td class="text-right">{{ $cat['quantity'] }}</td>
+                                        <td class="text-right">${{ number_format($cat['total_money']) }}</td>
+                                        <td class="text-right">{{ $cat['percentage'] }}%</td>
+                                    </tr>
+
+                                    {{-- Fila del contenido colapsable (Desglose de productos) --}}
+                                    <tr>
+                                        <td colspan="4" class="p-0 border-0">
+                                            <div class="collapse-content"> 
+                                                {{-- AGREGAR CLASE table-responsive PARA SCROLL HORIZONTAL en el desglose--}}
+                                                <div class="table-responsive"> 
+                                                    <table class="table table-sm m-0">
+                                                        <thead class="bg-light">
+                                                            <tr>
+                                                                <th>Producto</th>
+                                                                <th class="text-right">Cant.</th>
+                                                                <th class="text-right">Dinero</th>
+                                                                <th>% Cat</th> {{-- Columna 4 --}}
+                                                                <th class="text-right">% Total (Global)</th> {{-- Columna 5 --}}
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach ($cat['products'] as $prod)
+                                                                @php
+                                                                    $catPercentage = ($cat['total_money'] > 0) 
+                                                                        ? number_format(($prod['total_money'] / $cat['total_money']) * 100, 2) 
+                                                                        : 0;
+                                                                @endphp
+                                                                <tr class="product-detail-row"> 
+                                                                    <td>&nbsp;&nbsp;&nbsp;→ {{ $prod['product_name'] }}</td>
+                                                                    <td class="text-right">{{ $prod['quantity'] }}</td>
+                                                                    <td class="text-right">${{ number_format($prod['total_money']) }}</td>
+                                                                    <td class="text-right text-success font-weight-bold">{{ $catPercentage }}%</td> 
+                                                                    <td class="text-right text-muted">{{ $prod['percentage'] }}%</td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div> {{-- Cierre de table-responsive --}}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div> {{-- Cierre de table-responsive --}}
                 </div>
 
                 {{-- Tabla por Mesero (MES) --}}
                 <div class="col-md-6">
                     <h5 class="fw-bold mb-3">Rendimiento Meseros (Mes Seleccionado)</h5>
-                    <table class="table table-striped table-hover table-sm border">
-                        <thead class="thead-dark">
-                            <tr>
-                                <th>Mesero</th>
-                                <th class="text-center">Órdenes</th>
-                                <th class="text-right">Total Vendido</th>
-                                <th class="text-right">% Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @php
-                                $monthlyTotalSales = $detailedStats['total_sales'] ?? 1; // Total para el cálculo
-                            @endphp
-                            @foreach ($detailedStats['waiter_stats'] as $waiter)
-                                @php
-                                    $waiterPercentage = ($monthlyTotalSales > 0) 
-                                        ? number_format(($waiter['total_sold'] / $monthlyTotalSales) * 100, 2) 
-                                        : 0;
-                                @endphp
-                                <tr class="product-detail-row"> 
-                                    <td>{{ $waiter['name'] }}</td>
-                                    <td class="text-center">{{ $waiter['orders_count'] }}</td>
-                                    <td class="text-right">${{ number_format($waiter['total_sold']) }}</td>
-                                    {{-- AJUSTE: % en color negro --}}
-                                    <td class="text-right text-black font-weight-bold">{{ $waiterPercentage }}%</td> 
+                    <div class="table-responsive"> {{-- AGREGAR table-responsive --}}
+                        <table class="table table-striped table-hover table-sm border">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Mesero</th>
+                                    <th class="text-center">Órdenes</th>
+                                    <th class="text-right">Total Vendido</th>
+                                    <th class="text-right">% Total</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @php
+                                    $monthlyTotalSales = $detailedStats['total_sales'] ?? 1; // Total para el cálculo
+                                @endphp
+                                @foreach ($detailedStats['waiter_stats'] as $waiter)
+                                    @php
+                                        $waiterPercentage = ($monthlyTotalSales > 0) 
+                                            ? number_format(($waiter['total_sold'] / $monthlyTotalSales) * 100, 2) 
+                                            : 0;
+                                    @endphp
+                                    <tr class="product-detail-row"> 
+                                        <td>{{ $waiter['name'] }}</td>
+                                        <td class="text-center">{{ $waiter['orders_count'] }}</td>
+                                        <td class="text-right">${{ number_format($waiter['total_sold']) }}</td>
+                                        {{-- AJUSTE: % en color negro --}}
+                                        <td class="text-right text-black font-weight-bold">{{ $waiterPercentage }}%</td> 
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div> {{-- Cierre de table-responsive --}}
                 </div>
             </div>
             
@@ -259,41 +299,43 @@
             <div class="row mt-4">
                 <div class="col-md-12">
                     <h5 class="fw-bold mb-3">Ventas por Método de Pago (Mes Seleccionado)</h5>
-                    <table class="table table-striped table-hover table-sm border">
-                        <thead class="thead-dark">
-                            <tr>
-                                <th>Método de Pago</th>
-                                <th class="text-right">Monto Recaudado</th>
-                                <th class="text-right">% Total Recaudado</th> 
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @php
-                                $paymentMethods = $detailedStats['payment_methods'] ?? [];
-                                $monthlyRecaudadoTotal = collect($paymentMethods)->sum('total_money');
-                                $monthlyDenominator = ($monthlyRecaudadoTotal > 0) ? $monthlyRecaudadoTotal : 1;
-                            @endphp
-                            
-                            @forelse ($paymentMethods as $method)
-                                @php
-                                    $totalMoney = data_get($method, 'total_money', 0);
-                                    $methodName = data_get($method, 'payment_method', 'Desconocido'); 
-                                    $methodPercentage = number_format(($totalMoney / $monthlyDenominator) * 100, 2); 
-                                @endphp
-                                <tr class="product-detail-row"> 
-                                    <td>{{ $methodName }}</td>
-                                    <td class="text-right">${{ number_format($totalMoney) }}</td>
-                                    <td class="text-right text-black">{{ $methodPercentage }}%</td> 
-                                </tr>
-                            @empty
+                    <div class="table-responsive"> {{-- AGREGAR table-responsive --}}
+                        <table class="table table-striped table-hover table-sm border">
+                            <thead class="thead-dark">
                                 <tr>
-                                    <td colspan="3" class="text-center text-muted py-3">
-                                        ⚠️ **ADVERTENCIA:** No se encontraron datos de métodos de pago para este mes.
-                                    </td>
+                                    <th>Método de Pago</th>
+                                    <th class="text-right">Monto Recaudado</th>
+                                    <th class="text-right">% Total Recaudado</th> 
                                 </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @php
+                                    $paymentMethods = $detailedStats['payment_methods'] ?? [];
+                                    $monthlyRecaudadoTotal = collect($paymentMethods)->sum('total_money');
+                                    $monthlyDenominator = ($monthlyRecaudadoTotal > 0) ? $monthlyRecaudadoTotal : 1;
+                                @endphp
+                                
+                                @forelse ($paymentMethods as $method)
+                                    @php
+                                        $totalMoney = data_get($method, 'total_money', 0);
+                                        $methodName = data_get($method, 'payment_method', 'Desconocido'); 
+                                        $methodPercentage = number_format(($totalMoney / $monthlyDenominator) * 100, 2); 
+                                    @endphp
+                                    <tr class="product-detail-row"> 
+                                        <td>{{ $methodName }}</td>
+                                        <td class="text-right">${{ number_format($totalMoney) }}</td>
+                                        <td class="text-right text-black">{{ $methodPercentage }}%</td> 
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted py-3">
+                                            ⚠️ **ADVERTENCIA:** No se encontraron datos de métodos de pago para este mes.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div> {{-- Cierre de table-responsive --}}
                 </div>
             </div>
         </div>
@@ -319,99 +361,107 @@
             <hr class="my-4">
 
             <div class="row mt-4">
-                 {{-- Tabla Global por Categoría (CON DESGLOSE Y %) --}}
-                <div class="col-md-6">
+                {{-- Tabla Global por Categoría (CON DESGLOSE Y %) --}}
+                <div class="col-md-6 mb-4 mb-md-0">
                     <h5 class="fw-bold mb-3">Global por Categoría</h5>
-                    <table class="table table-bordered table-sm table-hover border">
-                        <thead class="thead-dark">
-                            <tr>
-                                <th>Categoría</th>
-                                <th class="text-right">Cant.</th>
-                                <th class="text-right">Dinero</th>
-                                <th class="text-right">% Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($globalStats['sales_by_category'] as $cat)
-                                {{-- Fila principal de la categoría (con efecto hover/zoom) --}}
-                                <tr class="collapse-header-row" onclick="toggleAccordion(this.nextElementSibling)">
-                                    <td>{{ ucfirst($cat['type']) }}</td>
-                                    <td class="text-right">{{ $cat['quantity'] }}</td>
-                                    <td class="text-right">${{ number_format($cat['total_money']) }}</td>
-                                    <td class="text-right">{{ $cat['percentage'] }}%</td>
-                                </tr>
-
-                                {{-- Fila del contenido colapsable (Desglose de productos) --}}
+                    {{-- AGREGAR CLASE table-responsive PARA SCROLL HORIZONTAL --}}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-sm table-hover border table-category-main">
+                            <thead class="thead-dark">
                                 <tr>
-                                    <td colspan="4" class="p-0 border-0">
-                                        <div class="collapse-content">
-                                            <table class="table table-sm m-0">
-                                                <thead class="bg-light">
-                                                    <tr>
-                                                        <th>Producto</th>
-                                                        <th class="text-right">Cant.</th>
-                                                        <th class="text-right">Dinero</th>
-                                                        <th class="text-right">% Cat</th> 
-                                                        <th class="text-right">% Total (Global)</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    @foreach ($cat['products'] as $prod)
-                                                        @php
-                                                            $catPercentage = ($cat['total_money'] > 0) 
-                                                                ? number_format(($prod['total_money'] / $cat['total_money']) * 100, 2) 
-                                                                : 0;
-                                                        @endphp
-                                                        <tr class="product-detail-row"> 
-                                                            <td>&nbsp;&nbsp;&nbsp;→ {{ $prod['product_name'] }}</td>
-                                                            <td class="text-right">{{ $prod['quantity'] }}</td>
-                                                            <td class="text-right">${{ number_format($prod['total_money']) }}</td>
-                                                            <td class="text-right text-success font-weight-bold">{{ $catPercentage }}%</td>
-                                                            <td class="text-right text-muted">{{ $prod['percentage'] }}%</td>
-                                                        </tr>
-                                                    @endforeach
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </td>
+                                    <th>Categoría</th>
+                                    <th class="text-right">Cant.</th>
+                                    <th class="text-right">Dinero</th>
+                                    <th class="text-right">% Total</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @foreach ($globalStats['sales_by_category'] as $cat)
+                                    {{-- Fila principal de la categoría (con efecto hover/zoom) --}}
+                                    <tr class="collapse-header-row" onclick="toggleAccordion(this.nextElementSibling)">
+                                        <td>{{ ucfirst($cat['type']) }}</td>
+                                        <td class="text-right">{{ $cat['quantity'] }}</td>
+                                        <td class="text-right">${{ number_format($cat['total_money']) }}</td>
+                                        <td class="text-right">{{ $cat['percentage'] }}%</td>
+                                    </tr>
+
+                                    {{-- Fila del contenido colapsable (Desglose de productos) --}}
+                                    <tr>
+                                        <td colspan="4" class="p-0 border-0">
+                                            <div class="collapse-content">
+                                                {{-- AGREGAR CLASE table-responsive PARA SCROLL HORIZONTAL en el desglose--}}
+                                                <div class="table-responsive">
+                                                    <table class="table table-sm m-0">
+                                                        <thead class="bg-light">
+                                                            <tr>
+                                                                <th>Producto</th>
+                                                                <th class="text-right">Cant.</th>
+                                                                <th class="text-right">Dinero</th>
+                                                                <th>% Cat</th> {{-- Columna 4 --}}
+                                                                <th class="text-right">% Total (Global)</th> {{-- Columna 5 --}}
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            @foreach ($cat['products'] as $prod)
+                                                                @php
+                                                                    $catPercentage = ($cat['total_money'] > 0) 
+                                                                        ? number_format(($prod['total_money'] / $cat['total_money']) * 100, 2) 
+                                                                        : 0;
+                                                                @endphp
+                                                                <tr class="product-detail-row"> 
+                                                                    <td>&nbsp;&nbsp;&nbsp;→ {{ $prod['product_name'] }}</td>
+                                                                    <td class="text-right">{{ $prod['quantity'] }}</td>
+                                                                    <td class="text-right">${{ number_format($prod['total_money']) }}</td>
+                                                                    <td class="text-right text-success font-weight-bold">{{ $catPercentage }}%</td>
+                                                                    <td class="text-right text-muted">{{ $prod['percentage'] }}%</td>
+                                                                </tr>
+                                                            @endforeach
+                                                        </tbody>
+                                                    </table>
+                                                </div> {{-- Cierre de table-responsive --}}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div> {{-- Cierre de table-responsive --}}
                 </div>
                 
                 {{-- Tabla Global por Mesero --}}
                 <div class="col-md-6">
                     <h5 class="fw-bold mb-3">Global por Mesero</h5>
-                    <table class="table table-bordered table-sm table-hover border">
-                        <thead class="thead-dark">
-                            <tr>
-                                <th>Mesero</th>
-                                <th class="text-center">Órdenes</th>
-                                <th class="text-right">Vendido</th>
-                                <th class="text-right">% Total</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @php
-                                $globalTotalSales = $globalStats['total_sales'] ?? 1; // Total para el cálculo
-                            @endphp
-                            @foreach ($globalStats['waiter_stats'] as $waiter)
-                                @php
-                                    $waiterPercentage = ($globalTotalSales > 0) 
-                                        ? number_format(($waiter['total_sold'] / $globalTotalSales) * 100, 2) 
-                                        : 0;
-                                @endphp
-                                <tr class="product-detail-row"> 
-                                    <td>{{ $waiter['name'] }}</td>
-                                    <td class="text-center">{{ $waiter['orders_count'] }}</td>
-                                    <td class="text-right">${{ number_format($waiter['total_sold']) }}</td>
-                                    {{-- AJUSTE: % en color negro --}}
-                                    <td class="text-right text-black font-weight-bold">{{ $waiterPercentage }}%</td>
+                    <div class="table-responsive"> {{-- AGREGAR table-responsive --}}
+                        <table class="table table-bordered table-sm table-hover border">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Mesero</th>
+                                    <th class="text-center">Órdenes</th>
+                                    <th class="text-right">Vendido</th>
+                                    <th class="text-right">% Total</th>
                                 </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @php
+                                    $globalTotalSales = $globalStats['total_sales'] ?? 1; // Total para el cálculo
+                                @endphp
+                                @foreach ($globalStats['waiter_stats'] as $waiter)
+                                    @php
+                                        $waiterPercentage = ($globalTotalSales > 0) 
+                                            ? number_format(($waiter['total_sold'] / $globalTotalSales) * 100, 2) 
+                                            : 0;
+                                    @endphp
+                                    <tr class="product-detail-row"> 
+                                        <td>{{ $waiter['name'] }}</td>
+                                        <td class="text-center">{{ $waiter['orders_count'] }}</td>
+                                        <td class="text-right">${{ number_format($waiter['total_sold']) }}</td>
+                                        {{-- AJUSTE: % en color negro --}}
+                                        <td class="text-right text-black font-weight-bold">{{ $waiterPercentage }}%</td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div> {{-- Cierre de table-responsive --}}
                 </div>
             </div>
             
@@ -419,41 +469,43 @@
             <div class="row mt-4">
                 <div class="col-md-12">
                     <h5 class="fw-bold mb-3">Ventas por Método de Pago (Global)</h5>
-                    <table class="table table-bordered table-sm table-hover border">
-                        <thead class="thead-dark">
-                            <tr>
-                                <th>Método de Pago</th>
-                                <th class="text-right">Monto Recaudado</th>
-                                <th class="text-right">% Total Recaudado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @php
-                                $globalPaymentMethods = $globalStats['payment_methods'] ?? [];
-                                $globalRecaudadoTotal = collect($globalPaymentMethods)->sum('total_money');
-                                $globalDenominator = ($globalRecaudadoTotal > 0) ? $globalRecaudadoTotal : 1;
-                            @endphp
-                            
-                            @forelse ($globalPaymentMethods as $method)
-                                @php
-                                    $totalMoney = data_get($method, 'total_money', 0);
-                                    $methodName = data_get($method, 'payment_method', 'Desconocido');
-                                    $methodPercentage = number_format(($totalMoney / $globalDenominator) * 100, 2);
-                                @endphp
-                                <tr class="product-detail-row"> 
-                                    <td>{{ $methodName }}</td>
-                                    <td class="text-right">${{ number_format($totalMoney) }}</td>
-                                    <td class="text-right text-black">{{ $methodPercentage }}%</td> 
-                                </tr>
-                            @empty
+                    <div class="table-responsive"> {{-- AGREGAR table-responsive --}}
+                        <table class="table table-bordered table-sm table-hover border">
+                            <thead class="thead-dark">
                                 <tr>
-                                    <td colspan="3" class="text-center text-muted py-3">
-                                        ⚠️ **ADVERTENCIA:** No se encontraron datos de métodos de pago para el histórico global.
-                                    </td>
+                                    <th>Método de Pago</th>
+                                    <th class="text-right">Monto Recaudado</th>
+                                    <th class="text-right">% Total Recaudado</th>
                                 </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @php
+                                    $globalPaymentMethods = $globalStats['payment_methods'] ?? [];
+                                    $globalRecaudadoTotal = collect($globalPaymentMethods)->sum('total_money');
+                                    $globalDenominator = ($globalRecaudadoTotal > 0) ? $globalRecaudadoTotal : 1;
+                                @endphp
+                                
+                                @forelse ($globalPaymentMethods as $method)
+                                    @php
+                                        $totalMoney = data_get($method, 'total_money', 0);
+                                        $methodName = data_get($method, 'payment_method', 'Desconocido');
+                                        $methodPercentage = number_format(($totalMoney / $globalDenominator) * 100, 2);
+                                    @endphp
+                                    <tr class="product-detail-row"> 
+                                        <td>{{ $methodName }}</td>
+                                        <td class="text-right">${{ number_format($totalMoney) }}</td>
+                                        <td class="text-right text-black">{{ $methodPercentage }}%</td> 
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted py-3">
+                                            ⚠️ **ADVERTENCIA:** No se encontraron datos de métodos de pago para el histórico global.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div> {{-- Cierre de table-responsive --}}
                 </div>
             </div>
         </div>
