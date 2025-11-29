@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Cocina - Órdenes Pendientes')   
+
 @section('content')
 
 <!DOCTYPE html>

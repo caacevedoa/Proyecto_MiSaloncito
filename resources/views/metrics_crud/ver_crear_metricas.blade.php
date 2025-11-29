@@ -1,3 +1,9 @@
+@extends('layouts.app')
+
+@section('title', 'Métricas - MiSaloncito')
+
+@section('content')
+
 <!DOCTYPE html>
 <html lang="es">
 <head>

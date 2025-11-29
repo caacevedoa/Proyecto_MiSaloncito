@@ -1,10 +1,11 @@
 @extends('layouts.app')
 
+@section('title', 'Orden de Mesa')
 @section('content')
 
 <style>
     :root {
-        --primary-dark: #2c3e50;
+        --primary-dark: #002244;
         --primary-dark-hover: #1d2933;
         --accent-grey: #bdc3c7;
     }
@@ -33,7 +34,7 @@
 
     /* ===== CATEGORÍAS ===== */
     .category-btn {
-        background: var(--primary-dark);
+        background: #002244;
         color: white;
         border: none;
         font-weight: 600;
@@ -41,6 +42,7 @@
 
     .category-btn:hover {
         background: var(--primary-dark-hover);
+        color: white;
     }
 
     /* ===== PRODUCTOS ===== */
@@ -55,7 +57,8 @@
     }
 
     .product-btn:hover {
-        background: var(--primary-dark);
+        background: var(--primary-dark-hover);
+        color: white;
     }
 
     /* ===== BOTONES PRINCIPALES (UNIFICADOS) ===== */
@@ -111,7 +114,9 @@
         margin-bottom: 20px;
         display: inline-block;
     }
+    
 </style>
+
 
 <div class="order-wrapper">
 
@@ -291,10 +296,23 @@
     ========================================================= --}}
     <div class="mt-4 d-flex flex-wrap gap-2 justify-content-center">
 
+        @php
+            // Verificar si la orden tiene pago
+            $tienePago = \App\Models\Payment::where('order_id', $order->id)->exists();
+        @endphp
+
         @if ($order->status === 'entregado' || $order->status === 'pendiente')
-            <a href="{{ route('payments_order.pay', $order->id) }}" class="btn btn-dark-blue">
-                Pagar
-            </a>
+            
+            @if(!$tienePago)
+                <a href="{{ route('payments_order.pay', $order->id) }}" class="btn btn-dark-blue">
+                    Pagar
+                </a>
+            @else
+                <button class="btn btn-secondary" style="opacity: 0.6; cursor: not-allowed;" disabled>
+                    Pagado
+                </button>
+            @endif
+
         @endif
 
         <a href="{{ route('payments.invoice', $order->id) }}"

@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Editar Órden')
 @section('content')
 
 <!DOCTYPE html>

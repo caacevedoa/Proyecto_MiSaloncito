@@ -1,3 +1,9 @@
+@extends('layouts.app')
+
+@section('title', 'Editar Métrica')
+
+@section('content')
+
 <!DOCTYPE html>
 <html lang="es">
 <head>

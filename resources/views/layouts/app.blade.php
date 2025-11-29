@@ -6,7 +6,9 @@
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    {{-- MODIFICACIÓN AQUÍ: --}}
+    {{-- Esto permite definir un título específico por vista, o usar el nombre de la app por defecto --}}
+    <title>@yield('title', config('app.name', 'Laravel'))</title>
 
     <!-- Fonts -->
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">

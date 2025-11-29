@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('title', 'Órdenes - MiSaloncito')
+
 @section('content')
 
 <!DOCTYPE html>

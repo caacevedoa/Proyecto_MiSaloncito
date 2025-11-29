@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Usuarios - MiSaloncito')
 @section('content')
 
 <!DOCTYPE html>

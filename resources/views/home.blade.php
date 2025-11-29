@@ -1,5 +1,6 @@
 @extends('layouts.app')
 
+@section('title', 'Home - MiSaloncito')
 @section('content')
 
 <style>

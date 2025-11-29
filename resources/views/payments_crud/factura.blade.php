@@ -1,8 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Factura - Mi Saloncito</title>
+    <title>Factura</title>
 
     <!-- Bootstrap -->
     <link rel="stylesheet"
