@@ -86,7 +86,7 @@ Route::get('/factura/{id}', [PaymentController::class, 'invoice'])
 
 Route::get('payments_order/{id}', 
     [PaymentController::class, 'pay'])
-    ->middleware(['auth', 'role:administrador'])
+    ->middleware(['auth', 'role:mesero, administrador, gerente'])
     ->name('payments_order.pay');
 
 // ------------------------------------------------------
