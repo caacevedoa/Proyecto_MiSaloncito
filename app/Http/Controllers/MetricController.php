@@ -2,348 +2,218 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Metric;
+use Illuminate\Http\Request;
 use App\Models\Order;
 use App\Models\User;
-use App\Models\Payment;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\Product;
+use App\Models\OrderDetail;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class MetricController extends Controller
 {
-    /**
-     * Función auxiliar para calcular estadísticas complejas (Tops) en un rango de fechas.
-     */
-    private function getStatsForPeriod($startDate, $endDate)
-    {
-        // 1. TOP MESERO (Por dinero vendido y cantidad de órdenes)
-        $topWaiter = Order::whereBetween('order_datetime', [$startDate, $endDate])
-            ->where('status', '!=', 'cancelado')
-            ->select('user_id', DB::raw('SUM(total) as total_sold'), DB::raw('COUNT(*) as total_orders_count'))
-            ->groupBy('user_id')
-            ->orderByDesc('total_sold')
-            ->with('user')
-            ->first();
-
-        // 2. PRODUCTO MÁS VENDIDO (Por Cantidad)
-        $topProductQty = DB::table('order_details')
-            ->join('orders', 'orders.id', '=', 'order_details.order_id')
-            ->join('products', 'products.id', '=', 'order_details.product_id')
-            ->whereBetween('orders.order_datetime', [$startDate, $endDate])
-            ->where('orders.status', '!=', 'cancelado')
-            ->select('products.product_name', DB::raw('SUM(order_details.quantity) as total_qty'))
-            ->groupBy('products.product_name')
-            ->orderByDesc('total_qty')
-            ->first();
-
-        // 3. PRODUCTO MÁS RENTABLE (Por Dinero Recaudado)
-        $topProductMoney = DB::table('order_details')
-            ->join('orders', 'orders.id', '=', 'order_details.order_id')
-            ->join('products', 'products.id', '=', 'order_details.product_id')
-            ->whereBetween('orders.order_datetime', [$startDate, $endDate])
-            ->where('orders.status', '!=', 'cancelado')
-            ->select('products.product_name', DB::raw('SUM(order_details.quantity * order_details.unit_price) as total_money'))
-            ->groupBy('products.product_name')
-            ->orderByDesc('total_money')
-            ->first();
-
-        return [
-            'waiter_name'  => $topWaiter ? ($topWaiter->user->name ?? 'N/A') : 'N/A',
-            'waiter_total' => $topWaiter ? $topWaiter->total_sold : 0,
-            'waiter_qty'   => $topWaiter ? $topWaiter->total_orders_count : 0,
-            
-            'pro_qty_name' => $topProductQty ? $topProductQty->product_name : 'N/A',
-            'pro_qty_val'  => $topProductQty ? $topProductQty->total_qty : 0,
-
-            'pro_money_name' => $topProductMoney ? $topProductMoney->product_name : 'N/A',
-            'pro_money_val'  => $topProductMoney ? $topProductMoney->total_money : 0,
-        ];
-    }
-
-    /**
-     * Lógica para calcular y guardar métricas diarias en la BD (Usado por store y update)
-     */
-    private function calculateAndStoreMetrics(string $date, ?Metric $metric = null): Metric
-    {
-        $ordersToday = Order::whereDate('order_datetime', $date)->where('status', '!=', 'cancelado')->get();
-        
-        if ($ordersToday->isEmpty() && $metric === null) {
-            throw new \Exception('No hubo órdenes válidas en la fecha ' . $date . '.');
-        }
-
-        // Cálculos básicos
-        $totalSales = $ordersToday->sum('total');
-        $totalOrders = $ordersToday->count();
-
-        // Obtenemos los stats avanzados para guardar los nombres en la tabla metrics (como respaldo histórico)
-        $start = Carbon::parse($date)->startOfDay();
-        $end = Carbon::parse($date)->endOfDay();
-        $stats = $this->getStatsForPeriod($start, $end);
-
-        // Resolver IDs foráneos obligatorios (Integridad Referencial)
-        // Usamos first() y añadimos un '?? null' para que si no hay órdenes ese día, los FKs sean NULL
-        $firstOrder = Order::whereDate('order_datetime', $date)->oldest('id')->first();
-        $lastOrder = Order::whereDate('order_datetime', $date)->latest('id')->first();
-        $lastPayment = $lastOrder ? Payment::where('order_id', $lastOrder->id)->first() : null;
-        
-        // Datos a guardar
-        $data = [
-            'record_date'             => $date,
-            'total_sales_date'        => $totalSales,
-            'total_orders'            => $totalOrders,
-            // NOTA: Cambiamos los nombres de los campos para ser coherentes con el contenido (guarda el nombre)
-            'best_selling_product_name' => $stats['pro_qty_name'], 
-            'most_active_waiter_name'   => $stats['waiter_name'],  
-            
-            // FKs (Usamos IDs seguros o NULL)
-            // user_id puede ser el mesero de la primera orden o null si no hay órdenes
-            'user_id'  => $firstOrder->user_id ?? null,
-            // order_id apunta a la última orden del día o null
-            'order_id' => $lastOrder->id ?? null,
-            // pay_id apunta al último pago del día o null
-            'pay_id'   => $lastPayment->id ?? null,
-        ];
-        
-        if ($metric) {
-            $metric->update($data);
-            return $metric;
-        } else {
-            return Metric::create($data);
-        }
-    }
-
-    // Acepta un parámetro opcional 'selected_month'
     public function index(Request $request)
     {
-        // =============================================================
-        // LÓGICA DE SELECCIÓN DE MES (PARA DETALLE MENSUAL)
-        // =============================================================
-        $selectedMonth = $request->input('selected_month');
+        // 1. Filtro de Mes para "Estadísticas Detalladas"
+        // Si no viene fecha, usamos el mes actual
+        $selectedMonth = $request->input('month', Carbon::now()->format('Y-m'));
+        $startOfMonth = Carbon::parse($selectedMonth)->startOfMonth();
+        $endOfMonth = Carbon::parse($selectedMonth)->endOfMonth();
+
+        // --- CÁLCULOS PARA TARJETAS PRINCIPALES (KPIs) ---
         
-        if ($selectedMonth) {
-            try {
-                // Intenta parsear la fecha (formato YYYY-MM)
-                $date = Carbon::createFromFormat('Y-m', $selectedMonth);
-            } catch (\Exception $e) {
-                // Si falla, usa el mes anterior por defecto
-                $date = Carbon::now()->subMonthNoOverflow();
-            }
-        } else {
-            // Por defecto, usa el mes anterior
-            $date = Carbon::now()->subMonthNoOverflow();
-        }
+        // A. Métricas Diarias (HOY)
+        $dailyMetrics = $this->getMetricsByRange(Carbon::today(), Carbon::today()->endOfDay());
 
-        $lastMonthStart = $date->startOfMonth();
-        $lastMonthEnd = $date->copy()->endOfMonth();
-        // ESTA ES LA VARIABLE QUE DEBE USARSE EN LA VISTA PARA LOS TÍTULOS
-        $lastMonthName = $lastMonthStart->getTranslatedMonthName() . ' ' . $lastMonthStart->year; 
-        
-        // =============================================================
-        // 1. MÉTRICAS DIARIAS (Enriquecidas con stats al vuelo)
-        // =============================================================
-        $rawDailyMetrics = Metric::orderBy('record_date', 'desc')->get();
-        
-        $metrics = $rawDailyMetrics->map(function ($metric) {
-            // NOTA IMPORTANTE: En la base de datos ya deberíamos tener los nombres de los tops,
-            // pero si la métrica fue generada antes de este cambio, o para refrescar, 
-            // podemos recalcular los stats en tiempo de ejecución.
-            $start = Carbon::parse($metric->record_date)->startOfDay();
-            $end   = Carbon::parse($metric->record_date)->endOfDay();
-            $metric->stats = $this->getStatsForPeriod($start, $end);
-            return $metric;
-        });
+        // B. Métricas Semanales (Esta semana)
+        $weeklyMetrics = $this->getMetricsByRange(Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek());
 
-        // =============================================================
-        // 2. MÉTRICAS SEMANALES (Cálculo se mantiene igual)
-        // =============================================================
-        $weeklyGroups = Order::select(
-                DB::raw('YEAR(order_datetime) as year'),
-                DB::raw('WEEKOFYEAR(order_datetime) as period')
-            )
-            ->where('status', '!=', 'cancelado')
-            ->groupBy('year', 'period')
-            ->orderBy('year', 'desc')
-            ->orderBy('period', 'desc')
-            ->get();
+        // C. Métricas Mensuales (Este mes actual)
+        $monthlyMetrics = $this->getMetricsByRange(Carbon::now()->startOfMonth(), Carbon::now()->endOfMonth());
 
-        $weeklyMetrics = [];
-        foreach ($weeklyGroups as $group) {
-            $dto = Carbon::now()->setISODate($group->year, $group->period);
-            $start = $dto->startOfWeek();
-            $end = $dto->copy()->endOfWeek();
+        // --- D. ESTADÍSTICAS DETALLADAS (POR MES SELECCIONADO) ---
+        $detailedStats = $this->getDetailedStats($startOfMonth, $endOfMonth);
 
-            $totals = Order::whereBetween('order_datetime', [$start, $end])
-                ->where('status', '!=', 'cancelado')
-                ->selectRaw('SUM(total) as total_sales, COUNT(*) as total_orders')
-                ->first();
-
-            $stats = $this->getStatsForPeriod($start, $end);
-
-            $weeklyMetrics[] = (object) [
-                'year' => $group->year,
-                'period' => $group->period,
-                'total_sales' => $totals->total_sales,
-                'total_orders' => $totals->total_orders,
-                'stats' => $stats
-            ];
-        }
-
-        // =============================================================
-        // 3. MÉTRICAS MENSUALES (RESUMEN) (Cálculo se mantiene igual)
-        // =============================================================
-        $monthlyGroups = Order::select(
-                DB::raw('YEAR(order_datetime) as year'),
-                DB::raw('MONTH(order_datetime) as month_num'),
-                DB::raw('MONTHNAME(order_datetime) as month_name')
-            )
-            ->where('status', '!=', 'cancelado')
-            ->groupBy('year', 'month_num', 'month_name')
-            ->orderBy('year', 'desc')
-            ->orderBy('month_num', 'desc')
-            ->get();
-
-        $monthlyMetrics = [];
-        foreach ($monthlyGroups as $group) {
-            $start = Carbon::create($group->year, $group->month_num, 1)->startOfMonth();
-            $end   = Carbon::create($group->year, $group->month_num, 1)->endOfMonth();
-
-            $totals = Order::whereBetween('order_datetime', [$start, $end])
-                ->where('status', '!=', 'cancelado')
-                ->selectRaw('SUM(total) as total_sales, COUNT(*) as total_orders')
-                ->first();
-
-            $stats = $this->getStatsForPeriod($start, $end);
-
-            $monthlyMetrics[] = (object) [
-                'year' => $group->year,
-                'period' => $group->month_name,
-                'total_sales' => $totals->total_sales,
-                'total_orders' => $totals->total_orders,
-                'stats' => $stats
-            ];
-        }
-
-        // =============================================================
-        // 4. ESTADÍSTICAS GLOBALES POR PRODUCTO (Histórico)
-        // =============================================================
-        $productStats = DB::table('order_details')
-            ->join('products', 'products.id', '=', 'order_details.product_id')
-            ->join('orders', 'orders.id', '=', 'order_details.order_id')
-            ->where('orders.status', '!=', 'cancelado')
-            ->select(
-                'products.product_name',
-                DB::raw('SUM(order_details.quantity) as total_qty'),
-                DB::raw('SUM(order_details.quantity * order_details.unit_price) as total_money')
-            )
-            ->groupBy('products.product_name')
-            ->orderByDesc('total_money')
-            ->get();
-
-        // =============================================================
-        // 5. ESTADÍSTICAS GLOBALES POR MESERO (Histórico)
-        // =============================================================
-        $waiterStats = Order::with('user')
-            ->select(
-                'user_id',
-                DB::raw('COUNT(*) as total_orders_count'),
-                DB::raw('SUM(total) as total_money_sold')
-            )
-            ->where('status', '!=', 'cancelado')
-            ->groupBy('user_id')
-            ->orderByDesc('total_money_sold')
-            ->get();
-
-        // =============================================================
-        // 6. ESTADÍSTICAS GLOBALES POR MES SELECCIONADO (Detalle)
-        // =============================================================
-        
-        // Stats Producto por Mes Seleccionado
-        $monthlyProductStats = DB::table('order_details')
-            ->join('products', 'products.id', '=', 'order_details.product_id')
-            ->join('orders', 'orders.id', '=', 'order_details.order_id')
-            ->whereBetween('orders.order_datetime', [$lastMonthStart, $lastMonthEnd])
-            ->where('orders.status', '!=', 'cancelado')
-            ->select(
-                'products.product_name',
-                DB::raw('SUM(order_details.quantity) as total_qty'),
-                DB::raw('SUM(order_details.quantity * order_details.unit_price) as total_money')
-            )
-            ->groupBy('products.product_name')
-            ->orderByDesc('total_money')
-            ->get();
-
-        // Stats Mesero por Mes Seleccionado
-        $monthlyWaiterStats = Order::with('user')
-            ->select(
-                'user_id',
-                DB::raw('COUNT(*) as total_orders_count'),
-                DB::raw('SUM(total) as total_money_sold')
-            )
-            ->whereBetween('order_datetime', [$lastMonthStart, $lastMonthEnd])
-            ->where('status', '!=', 'cancelado')
-            ->groupBy('user_id')
-            ->orderByDesc('total_money_sold')
-            ->get();
-
-        // Obtenemos todos los meses con órdenes para el selector de la vista
-        $availableMonths = Order::select(
-                DB::raw('DATE_FORMAT(order_datetime, "%Y-%m") as month_year'),
-                DB::raw('YEAR(order_datetime) as year'),
-                DB::raw('MONTHNAME(order_datetime) as month_name')
-            )
-            ->distinct()
-            ->orderBy('month_year', 'desc')
-            ->get();
-
+        // --- E. ESTADÍSTICAS GLOBALES (HISTÓRICO) ---
+        $globalStats = $this->getDetailedStats(null, null); // Null significa "todo el tiempo"
 
         return view('metrics_crud.ver_crear_metricas', compact(
-            'metrics', 
+            'dailyMetrics', 
             'weeklyMetrics', 
-            'monthlyMetrics',
-            'productStats', 
-            'waiterStats',
-            'monthlyProductStats', 
-            'monthlyWaiterStats',  
-            'lastMonthName',
-            'selectedMonth', 
-            'availableMonths'
+            'monthlyMetrics', 
+            'detailedStats', 
+            'globalStats',
+            'selectedMonth'
         ));
     }
 
-    // --- MÉTODOS CRUD BÁSICOS ---
-
-    public function store(Request $request)
+    /**
+     * Función auxiliar para obtener KPIs básicos en un rango de fechas.
+     * Retorna: Ventas, Ordenes, Tops.
+     */
+    private function getMetricsByRange($startDate, $endDate)
     {
-        $request->validate([
-            'record_date' => 'required|date|unique:metrics,record_date',
-        ]);
-        
-        try {
-            $this->calculateAndStoreMetrics($request->record_date);
-            return redirect()->route('metrics.index')->with('success', 'Reporte diario generado correctamente.');
-        } catch (\Exception $e) {
-            return back()->withErrors(['msg' => $e->getMessage()]);
-        }
+        // Consultamos órdenes CERRADAS en el rango
+        $orders = Order::where('status', 'cerrado')
+            ->whereBetween('order_datetime', [$startDate, $endDate])
+            ->with(['details.product', 'user']) // Eager loading
+            ->get();
+
+        return [
+            'date_label' => $startDate->format('d/m/Y') . ' - ' . $endDate->format('d/m/Y'),
+            'total_sales' => $orders->sum('total'),
+            'total_orders' => $orders->count(),
+            'top_waiter' => $this->getTopWaiter($orders),
+            'top_product_qty' => $this->getTopProduct($orders, 'quantity'),
+            'top_product_money' => $this->getTopProduct($orders, 'money'),
+        ];
     }
 
     /**
-     * Usa el método update para la ruta resource.
+     * Función auxiliar para estadísticas detalladas (Categorías y Meseros).
+     * Si las fechas son null, calcula histórico global.
      */
-    public function update(Request $request, Metric $metric)
+    private function getDetailedStats($startDate, $endDate)
     {
-        try {
-            // Reutilizamos la lógica de cálculo y almacenamiento
-            $this->calculateAndStoreMetrics($metric->record_date, $metric);
-            return redirect()->route('metrics.index')->with('success', 'Reporte actualizado con datos recientes.');
-        } catch (\Exception $e) {
-            return back()->withErrors(['msg' => 'Error al actualizar: ' . $e->getMessage()]);
+        // Consulta base para obtener TODAS las órdenes CERRADAS en el rango
+        $query = Order::where('status', 'cerrado')->with(['details.product', 'user']);
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('order_datetime', [$startDate, $endDate]);
         }
+
+        $orders = $query->get();
+
+        // 1. Calcular el Total General de Ventas del período
+        $totalGeneralVentas = $orders->sum('total');
+
+        // Si no hay ventas, retornamos cero para evitar división por cero.
+        if ($totalGeneralVentas == 0) {
+            return [
+                'sales_by_category' => collect(),
+                'waiter_stats' => collect(),
+                'payment_methods' => collect(), 
+                'total_sales' => 0,
+                'total_orders' => $orders->count(),
+            ];
+        }
+
+        // 2. Aplanamos todos los detalles de todas las órdenes
+        $allDetails = $orders->flatMap(function ($order) {
+            return $order->details;
+        });
+
+        // 3. Agrupar, calcular y desglosar por CATEGORÍA
+        $salesByCategory = $allDetails->groupBy(function ($detail) {
+            return $detail->product->product_type;
+        })->map(function ($categoryDetails, $type) use ($totalGeneralVentas) {
+            
+            // Desglose por Producto dentro de la Categoría
+            $productBreakdown = $categoryDetails->groupBy('product_id')->map(function ($productDetails) use ($totalGeneralVentas) {
+                $subtotalProducto = $productDetails->sum('subtotal');
+                return [
+                    'product_name' => $productDetails->first()->product->product_name,
+                    'quantity' => $productDetails->sum('quantity'),
+                    'total_money' => $subtotalProducto,
+                    'percentage' => round(($subtotalProducto / $totalGeneralVentas) * 100, 2),
+                ];
+            })->values()->sortByDesc('total_money');
+
+            // Cálculo total de la categoría
+            $subtotalCategoria = $categoryDetails->sum('subtotal');
+            
+            return [
+                'type' => $type,
+                'quantity' => $categoryDetails->sum('quantity'),
+                'total_money' => $subtotalCategoria,
+                'percentage' => round(($subtotalCategoria / $totalGeneralVentas) * 100, 2),
+                'products' => $productBreakdown, // ¡El desglose anidado!
+            ];
+        })->values()->sortByDesc('total_money');
+
+        // 4. Rendimiento de MESEROS
+        $waiterStats = $orders->groupBy('user_id')->map(function ($userOrders) {
+            return [
+                'name' => $userOrders->first()->user->name,
+                'orders_count' => $userOrders->count(),
+                'total_sold' => $userOrders->sum('total'),
+            ];
+        })->values();
+
+
+        // ----------------------------------------------------------------------
+        // 5. MÉTODOS DE PAGO - CORREGIDO con payments.total_pay
+        // ----------------------------------------------------------------------
+        $paymentsQuery = DB::table('payments')
+            ->join('orders', 'payments.order_id', '=', 'orders.id')
+            // CORRECCIÓN APLICADA: payments.total_pay
+            ->select('payments.payment_method', DB::raw('SUM(payments.total_pay) as total_money'));
+
+        if ($startDate && $endDate) {
+            // Filtramos por fecha si no es la consulta global
+            $paymentsQuery->whereBetween('orders.order_datetime', [$startDate, $endDate]);
+        }
+        
+        // Filtramos solo los pagos asociados a órdenes cerradas
+        $paymentsQuery->where('orders.status', 'cerrado');
+
+        $paymentsByMethod = $paymentsQuery
+            ->groupBy('payments.payment_method')
+            ->get()
+            ->toArray(); 
+        
+        // ----------------------------------------------------------------------
+
+        return [
+            'sales_by_category' => $salesByCategory,
+            'waiter_stats' => $waiterStats,
+            'payment_methods' => $paymentsByMethod, // ¡Datos de pagos incluidos!
+            'total_sales' => $totalGeneralVentas,
+            'total_orders' => $orders->count(),
+        ];
     }
 
-    public function destroy($id)
+    // --- HELPERS PRIVADOS PARA ENCONTRAR TOPS ---
+
+    private function getTopWaiter($orders)
     {
-        Metric::destroy($id);
-        return redirect()->route('metrics.index')->with('success', 'Métrica eliminada');
+        if ($orders->isEmpty()) return 'N/A';
+
+        // Agrupamos por usuario y sumamos su total vendido
+        $top = $orders->groupBy('user_id')->map(function ($group) {
+            return [
+                'name' => $group->first()->user->name,
+                'total' => $group->sum('total')
+            ];
+        })->sortByDesc('total')->first();
+
+        return $top ? $top['name'] . ' ($' . number_format($top['total']) . ')' : 'N/A';
+    }
+
+    private function getTopProduct($orders, $criteria)
+    {
+        if ($orders->isEmpty()) return 'N/A';
+
+        // Aplanamos detalles
+        $details = $orders->flatMap->details;
+
+        if ($details->isEmpty()) return 'N/A';
+
+        // Agrupamos por producto
+        $top = $details->groupBy('product_id')->map(function ($group) {
+            return [
+                'name' => $group->first()->product->product_name,
+                'qty' => $group->sum('quantity'),
+                'money' => $group->sum('subtotal')
+            ];
+        })->sortByDesc($criteria == 'quantity' ? 'qty' : 'money')->first();
+
+        if (!$top) return 'N/A';
+
+        if ($criteria == 'quantity') {
+            return $top['name'] . ' (' . $top['qty'] . ' un.)';
+        } else {
+            return $top['name'] . ' ($' . number_format($top['money']) . ')';
+        }
     }
 }
