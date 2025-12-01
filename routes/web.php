@@ -34,6 +34,7 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])
 // ------------------------------------------------------
 Route::resource('users', UserController::class);
 
+
 // ------------------------------------------------------
 // TABLES CONTROLLER
 // ------------------------------------------------------
@@ -86,7 +87,7 @@ Route::get('/factura/{id}', [PaymentController::class, 'invoice'])
 
 Route::get('payments_order/{id}', 
     [PaymentController::class, 'pay'])
-    ->middleware(['auth', 'role:administrador,gerente'])
+    ->middleware(['auth', 'role:mesero,administrador,gerencia'])
     ->name('payments_order.pay');
 
 // ------------------------------------------------------
@@ -99,6 +100,7 @@ Route::get('/factura/{id}/pdf', [ReceiptController::class, 'descargarFactura'])
 // METRICS CONTROLLER
 // ------------------------------------------------------
 Route::get('/metrics', [MetricController::class, 'index'])
+    ->middleware(['auth', 'role:administrador,gerencia'])
     ->name('metrics.index');
 
 // ------------------------------------------------------
